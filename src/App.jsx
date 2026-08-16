@@ -62,7 +62,7 @@ export default function ColemanReunion(){
 
   if(!loaded)return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"Georgia,serif",color:"#3B2F1E",background:"#FAF7F2"}}>Loading…</div>;
 
-  const tabs=[["tree","🌿 Tree"],["form","📝 Members"],["map","🗺 Map"],["bylaws","📜 By-Laws"],["reunion","🎉 Planner"],["costs","💰 Costs"],["attend","👥 Attendance"],["results","📊 Tracker"]];
+  const tabs=[["tree","🌿 Tree"],["form","📝 Members"],["map","🗺 Map"],["bylaws","📜 By-Laws"],["reunion","🎉 Planner"],["costs","📅 Schedule & Costs"],["attend","👥 Attendance"],["results","📊 Tracker"]];
 
   return (
     <div style={{fontFamily:"'Segoe UI',system-ui,sans-serif",background:"#FAF7F2",minHeight:"100vh",color:"#3B2F1E"}}>
@@ -83,7 +83,7 @@ export default function ColemanReunion(){
           <div><strong>🗺 Map</strong> — See where living members are located.</div>
           <div><strong>📜 By-Laws</strong> — Family reunion guidelines (draft).</div>
           <div><strong>🎉 Planner</strong> — Submit reunion preferences.</div>
-          <div><strong>💰 Costs</strong> — Budget breakdown and per-person cost calculator.</div>
+          <div><strong>📅 Schedule & Costs</strong> — Preliminary itinerary and per-person cost breakdown.</div>
           <div><strong>👥 Attendance</strong> — See who's registered and who's confirmed for the reunion.</div>
           <div><strong>📊 Tracker</strong> — See charts of everyone's preferences.</div>
         </div>
@@ -438,188 +438,156 @@ const RATE_75 = 30;
 const TEEN_DISCOUNT = 0.60; // 13-26 pays 60% of full rate
 
 function CostsPage({members}){
-  const [admin,setAdmin] = useState(false);
-  const [budget,setBudget] = useState({eventRoom:800,picnic:1200,activity:600,breakfast:500});
-  const [attendees,setAttendees] = useState(75);
-  const [saved,setSaved] = useState(false);
-  const [rsvps,setRsvps] = useState({});
-
-  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-budget");if(r?.value){const d=JSON.parse(r.value);setBudget(d.budget||budget);setAttendees(d.attendees||75);}}catch{} try{const r2=await window.storage.get("coleman-rsvp");if(r2?.value)setRsvps(JSON.parse(r2.value));}catch{}})();},[]);
+  const [admin,setAdmin]=useState(false);
+  const [budget,setBudget]=useState({eventRoom:800,picnic:1200,activity:600,breakfast:500});
+  const [attendees,setAttendees]=useState(75);
+  const [saved,setSaved]=useState(false);
+  const [rsvps,setRsvps]=useState({});
+  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-budget");if(r?.value){const d=JSON.parse(r.value);setBudget(d.budget||budget);setAttendees(d.attendees||75);}}catch{}try{const r2=await window.storage.get("coleman-rsvp");if(r2?.value)setRsvps(JSON.parse(r2.value));}catch{}})();},[]);
   const saveBudget=async()=>{try{await window.storage.set("coleman-budget",JSON.stringify({budget,attendees}));setSaved(true);setTimeout(()=>setSaved(false),2000);}catch{}};
-
-  // Reunion fee budget = picnic + activity + breakfast (hotel paid separately)
-  const feeBudget = budget.picnic + budget.activity + budget.breakfast;
-  const totalBudgetWithHotel = Object.values(budget).reduce((a,b)=>a+b,0);
+  const feeBudget=budget.picnic+budget.activity+budget.breakfast;
   const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};
   const ls={display:"block",fontSize:12,fontWeight:600,color:"#4A7A28",marginBottom:4,marginTop:10};
+  const calcFR=(s)=>{const N=attendees;const fr=N*(s.u12*RATE_U12+s.s75*RATE_75);const vp=s.t13*TEEN_DISCOUNT+s.a27;return vp===0?0:(feeBudget-fr)/(N*vp);};
+  const gm=members.filter(m=>!m.isDeceased&&!m.isRootParent&&rsvps[m.id]==="going");
+  const ag={u:0,t:0,a:0,s:0,x:0};
+  gm.forEach(m=>{const a=parseInt(m.age);if(!m.age||isNaN(a))ag.x++;else if(a<12)ag.u++;else if(a<=26)ag.t++;else if(a<=74)ag.a++;else ag.s++;});
+  gm.forEach(m=>{(m.childrenUnder18||[]).forEach(c=>{const a=parseInt(c.age);if(!c.age||isNaN(a))ag.x++;else if(a<12)ag.u++;else ag.t++;});});
+  const acd=[{name:"0–12",count:ag.u,rate:`$${RATE_U12}`},{name:"13–26",count:ag.t,rate:"60%"},{name:"27–74",count:ag.a,rate:"Full"},{name:"75+",count:ag.s,rate:`$${RATE_75}`}];
+  if(ag.x>0)acd.push({name:"No Age",count:ag.x,rate:"—"});
+  const tc=Object.values(ag).reduce((a,b)=>a+b,0);
 
-  // Calculate full rate for each scenario
-  const calcFullRate = (s) => {
-    const N = attendees;
-    const fixedRev = N * (s.u12 * RATE_U12 + s.s75 * RATE_75);
-    const varPct = s.t13 * TEEN_DISCOUNT + s.a27;
-    if (varPct === 0) return 0;
-    return (feeBudget - fixedRev) / (N * varPct);
-  };
-
-  // Age group counts from confirmed attendees
-  const goingMembers = members.filter(m => !m.isDeceased && !m.isRootParent && rsvps[m.id] === "going");
-  const ageGroups = {under12:0, teen:0, adult:0, senior:0, unknown:0};
-  goingMembers.forEach(m => {
-    const age = parseInt(m.age);
-    if (!m.age || isNaN(age)) ageGroups.unknown++;
-    else if (age < 12) ageGroups.under12++;
-    else if (age <= 26) ageGroups.teen++;
-    else if (age <= 74) ageGroups.adult++;
-    else ageGroups.senior++;
-  });
-  // Also count children under 18 from going members
-  goingMembers.forEach(m => {
-    (m.childrenUnder18 || []).forEach(c => {
-      const ca = parseInt(c.age);
-      if (!c.age || isNaN(ca)) ageGroups.unknown++;
-      else if (ca < 12) ageGroups.under12++;
-      else ageGroups.teen++;
-    });
-  });
-  const ageChartData = [
-    {name:"Under 12",count:ageGroups.under12,rate:`$${RATE_U12}`},
-    {name:"Ages 13–26",count:ageGroups.teen,rate:"60%"},
-    {name:"Ages 27–74",count:ageGroups.adult,rate:"Full"},
-    {name:"Age 75+",count:ageGroups.senior,rate:`$${RATE_75}`},
-  ];
-  if (ageGroups.unknown > 0) ageChartData.push({name:"No Age Listed",count:ageGroups.unknown,rate:"—"});
-  const totalConfirmed = Object.values(ageGroups).reduce((a,b)=>a+b,0);
+  const DH=({day,color})=>(<div style={{background:color||"#2D5016",borderRadius:"10px 10px 0 0",padding:"10px 16px",color:"#fff",fontSize:15,fontWeight:700}}>{day}</div>);
+  const EC=({title,time,desc,cost,costNote,items,highlight})=>(<div style={{padding:"14px 16px",borderBottom:"1px solid #F0EAE0",background:highlight?"#FFF8EC":"#fff"}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:4}}>
+      <div><div style={{fontSize:14,fontWeight:600,color:"#2D5016"}}>{title}</div>{time&&<div style={{fontSize:12,color:"#7A6B5A"}}>{time}</div>}</div>
+      {cost&&<div style={{textAlign:"right"}}><div style={{fontSize:14,fontWeight:700,color:costNote==="Self Pay"?"#C4963A":"#2D5016"}}>{cost}</div>{costNote&&<div style={{fontSize:11,color:costNote==="Self Pay"?"#C4963A":"#7A6B5A"}}>{costNote}</div>}</div>}
+    </div>
+    {desc&&<p style={{fontSize:13,color:"#3B2F1E",lineHeight:1.6,margin:"6px 0 0"}}>{desc}</p>}
+    {items&&<ul style={{margin:"6px 0 0 16px",fontSize:13,color:"#3B2F1E",lineHeight:1.6}}>{items.map((it,i)=><li key={i} style={{marginBottom:2}}>{it}</li>)}</ul>}
+  </div>);
 
   return (<div style={{maxWidth:860,margin:"0 auto"}}>
-    <h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Reunion Cost Estimator</h2>
-    <p style={{color:"#7A6B5A",fontSize:13,margin:"0 0 6px",lineHeight:1.5}}>This page calculates the per-person cost based on the reunion budget and expected family age mix. The host family sets the budget below.</p>
-
-    {/* Admin toggle */}
-    <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
-      <button onClick={()=>setAdmin(!admin)} style={{padding:"6px 14px",background:admin?"#C4963A":"#E8F3DC",color:admin?"#fff":"#2D5016",border:"1px solid "+( admin?"#C4963A":"#B8D4A0"),borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>{admin?"Close Admin":"🔧 Host Admin"}</button>
+    <h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Preliminary Reunion Schedule & Costs</h2>
+    <div style={{background:"#FFF8EC",borderRadius:10,padding:14,border:"1px solid #E8DFD0",marginBottom:20,fontSize:13,color:"#8B7355",lineHeight:1.5}}>
+      <strong style={{color:"#C4963A"}}>⚠️ Planning Estimates Only</strong> — Activities, locations, and prices have not been finalized. This page will be updated at the beginning of the reunion year. Estimated prices do not account for future inflation or changes in vendor pricing.
     </div>
 
-    {/* Admin budget entry */}
-    {admin && (<div style={{background:"#FFF8EC",borderRadius:14,padding:20,border:"2px solid #E8DFD0",marginBottom:16}}>
+    {/* FRIDAY */}
+    <div style={{borderRadius:12,border:"1px solid #C8DFB0",overflow:"hidden",marginBottom:16}}>
+      <DH day="Friday — Arrival & Welcome" color="#4A7A28"/>
+      <EC title="Travel / Arrival Day" desc="Family members check into the hotel throughout the day. No formal reunion activity is planned so families can arrive at their convenience."/>
+      <EC title="Optional Friday Activity" time="Evening" cost="$20–$40/person" costNote="Self Pay" highlight
+        desc="An optional activity may be organized for early arrivals. Participation is completely optional and not included in the reunion registration fee."
+        items={["Topgolf, bowling, dinner, or local attraction","Individuals/families pay their own expenses"]}/>
+      <EC title="Hotel Lobby Gathering" time="Evening" cost="$0" costNote="Included" desc="Informal family gathering in the hotel lobby/bar. Individuals may purchase their own food and drinks."/>
+      <EC title="Reunion Souvenir" cost="$5–$15/person" costNote="Included in Fee"
+        desc="Each registered family member receives a souvenir upon arrival. The goal is something useful, reusable, and memorable."
+        items={["Custom Family Reunion T-Shirt","Insulated Stainless-Steel Tumbler","Reusable Water Bottle","Family Reunion Hat or Tote Bag","Family Recipe Book"]}/>
+    </div>
+
+    {/* SATURDAY */}
+    <div style={{borderRadius:12,border:"1px solid #C8DFB0",overflow:"hidden",marginBottom:16}}>
+      <DH day="Saturday — Main Family Reunion Day"/>
+      <EC title="Saturday Morning" time="Morning — Open" desc="Open for late-arriving family, breakfast, hotel pool, free time, and visiting before the main event."/>
+      <div style={{padding:"14px 16px",background:"#E8F3DC",borderBottom:"1px solid #C8DFB0"}}>
+        <div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:4}}>Saturday Main Event — The family will select ONE activity</div>
+        <p style={{fontSize:12,color:"#4A7A28",margin:0}}>All options include Family Trivia Championship, family photos, and the Traveling Family Trivia Trophy presentation.</p>
+      </div>
+      <EC title="Option 1 — Spins Bowl: Family Bowling Day" cost="$25–$35/person" costNote="Included in Fee"
+        items={["Family bowling tournament (~6 per lane)","Bowling shoes included","Arcade games","Food/pizza"]}/>
+      <EC title="Option 2 — Park: Traditional Family Reunion" cost="$35–$45/person" costNote="Included in Fee"
+        items={["Reserved pavilion/shelter","Catered BBQ or picnic meal","Cornhole, volleyball, family field games","Family Olympics & kids' bouncy castle","Cards, dominoes, and music"]}/>
+      <EC title="Option 3 — Dave & Buster's: Family Game Day" cost="$30–$45/person" costNote="Included in Fee"
+        items={["Family meal","Arcade games & Power Cards","Family game challenges","Kids and teen activities"]}/>
+      <EC title="Option 4 — Topgolf: Family Golf & Games Day" cost="$35–$50/person" costNote="Included in Fee"
+        items={["Reserved hitting bays","Golf games for all skill levels","Family meal","Family competition"]}/>
+    </div>
+
+    {/* SUNDAY */}
+    <div style={{borderRadius:12,border:"1px solid #C8DFB0",overflow:"hidden",marginBottom:16}}>
+      <DH day="Sunday — Family Breakfast & Departure" color="#6B4C2A"/>
+      <EC title="Family Breakfast / Brunch" time="Morning" cost="$0–$25/person" costNote="Depends on Hotel"
+        desc="Sunday is a relaxed closing morning before families begin traveling home."
+        items={["$0 if breakfast is included with hotel stay","$15–$25 per person if a separate group breakfast is arranged"]}/>
+      <EC title="Business Meeting" time="Following Breakfast" cost="$0"
+        desc="Recognition of Family Trivia Champions, announcements regarding the next reunion, family votes, and final photos and goodbyes. Limited to family members."/>
+      <EC title="Checkout & Departure" time="Late Morning" desc="Hotel checkout and travel home."/>
+    </div>
+
+    {/* COST COMPARISON */}
+    <div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0",marginBottom:16}}>
+      <div style={{fontSize:15,fontWeight:700,color:"#2D5016",marginBottom:10}}>Estimated Reunion Fee Per Person</div>
+      <p style={{fontSize:12,color:"#7A6B5A",margin:"0 0 12px"}}>Assuming hotel breakfast is included and excluding the optional Friday activity. These are the estimated <strong>full adult rate</strong> (ages 27–74). Reduced rates apply for other age groups.</p>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:8}}>
+        {[["🎳 Spins Bowling","$30–$50"],["🌳 Park Reunion","$40–$60"],["🕹 Dave & Buster's","$35–$60"],["⛳ Topgolf","$40–$65"]].map(([l,r])=>(
+          <div key={l} style={{padding:"14px",background:"#F5FAEF",borderRadius:10,border:"1px solid #D4DFC8",textAlign:"center"}}>
+            <div style={{fontSize:13,color:"#4A7A28",marginBottom:4}}>{l}</div>
+            <div style={{fontSize:22,fontWeight:800,color:"#2D5016"}}>{r}</div>
+            <div style={{fontSize:11,color:"#7A6B5A"}}>per person (full rate)</div>
+          </div>))}
+      </div>
+      <p style={{fontSize:12,color:"#9A8B7A",marginTop:10,fontStyle:"italic"}}>Final costs depend on attendance, vendor pricing, group discounts, food, and the Saturday activity chosen.</p>
+    </div>
+
+    {/* HOTEL NOTE */}
+    <div style={{background:"#FFF8EC",borderRadius:12,padding:16,border:"2px solid #C4963A",marginBottom:16,textAlign:"center"}}>
+      <div style={{fontSize:16,fontWeight:700,color:"#B8860B",textDecoration:"underline",marginBottom:6}}>Hotel expenses are NOT included in the reunion fee.</div>
+      <p style={{fontSize:13,color:"#3B2F1E",margin:0}}>Each family books and pays their own hotel. The Host Family will arrange a group room block for discounted rates.</p>
+    </div>
+
+    {/* ADMIN */}
+    <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
+      <button onClick={()=>setAdmin(!admin)} style={{padding:"6px 14px",background:admin?"#C4963A":"#E8F3DC",color:admin?"#fff":"#2D5016",border:"1px solid "+(admin?"#C4963A":"#B8D4A0"),borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>{admin?"Close Admin":"🔧 Host Admin"}</button>
+    </div>
+    {admin&&(<div style={{background:"#FFF8EC",borderRadius:14,padding:20,border:"2px solid #E8DFD0",marginBottom:16}}>
       <div style={{fontSize:15,fontWeight:700,color:"#C4963A",marginBottom:4}}>Host Family — Budget Entry</div>
-      <p style={{fontSize:12,color:"#8B7355",margin:"0 0 12px"}}>Enter the estimated costs for each reunion activity. This will be used to calculate per-person rates.</p>
+      <p style={{fontSize:12,color:"#8B7355",margin:"0 0 12px"}}>Enter estimated costs to calculate per-person rates.</p>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:"0 16px"}}>
         <div><label style={ls}>🏨 Hotel Event Room</label><input style={is} type="number" value={budget.eventRoom} onChange={e=>setBudget(p=>({...p,eventRoom:+e.target.value||0}))}/></div>
-        <div><label style={ls}>🌳 Saturday Picnic</label><input style={is} type="number" value={budget.picnic} onChange={e=>setBudget(p=>({...p,picnic:+e.target.value||0}))}/></div>
-        <div><label style={ls}>🎯 Saturday Activity</label><input style={is} type="number" value={budget.activity} onChange={e=>setBudget(p=>({...p,activity:+e.target.value||0}))}/></div>
+        <div><label style={ls}>🌳 Saturday Event</label><input style={is} type="number" value={budget.picnic} onChange={e=>setBudget(p=>({...p,picnic:+e.target.value||0}))}/></div>
+        <div><label style={ls}>🎁 Souvenir</label><input style={is} type="number" value={budget.activity} onChange={e=>setBudget(p=>({...p,activity:+e.target.value||0}))}/></div>
         <div><label style={ls}>🥞 Sunday Breakfast</label><input style={is} type="number" value={budget.breakfast} onChange={e=>setBudget(p=>({...p,breakfast:+e.target.value||0}))}/></div>
         <div><label style={ls}>👥 Expected Attendees</label><input style={is} type="number" value={attendees} onChange={e=>setAttendees(+e.target.value||1)}/></div>
       </div>
-      <div style={{display:"flex",gap:8,alignItems:"center",marginTop:14}}>
-        <button onClick={saveBudget} style={{padding:"10px 24px",background:"#C4963A",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}}>Save Budget</button>
-        {saved&&<span style={{fontSize:13,color:"#4A7A28",fontWeight:600}}>✓ Saved</span>}
-      </div>
+      <div style={{display:"flex",gap:8,alignItems:"center",marginTop:14}}><button onClick={saveBudget} style={{padding:"10px 24px",background:"#C4963A",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}}>Save Budget</button>{saved&&<span style={{fontSize:13,color:"#4A7A28",fontWeight:600}}>✓ Saved</span>}</div>
     </div>)}
 
-    {/* Budget summary */}
+    {/* FEE BUDGET */}
     <div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0",marginBottom:16}}>
-      <div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:10}}>Reunion Budget Breakdown</div>
+      <div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:10}}>Reunion Fee Budget</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8}}>
-        {[["🌳 Saturday Picnic",budget.picnic],["🎯 Saturday Activity",budget.activity],["🥞 Sunday Breakfast",budget.breakfast]].map(([label,amt])=>(
-          <div key={label} style={{padding:"10px 14px",background:"#F5FAEF",borderRadius:8,border:"1px solid #D4DFC8"}}>
-            <div style={{fontSize:12,color:"#7A6B5A"}}>{label}</div>
-            <div style={{fontSize:18,fontWeight:700,color:"#2D5016"}}>${amt.toLocaleString()}</div>
-          </div>
-        ))}
+        {[["🌳 Saturday Event",budget.picnic],["🎁 Souvenir",budget.activity],["🥞 Sunday Breakfast",budget.breakfast]].map(([l,a])=>(<div key={l} style={{padding:"10px 14px",background:"#F5FAEF",borderRadius:8,border:"1px solid #D4DFC8"}}><div style={{fontSize:12,color:"#7A6B5A"}}>{l}</div><div style={{fontSize:18,fontWeight:700,color:"#2D5016"}}>${a.toLocaleString()}</div></div>))}
       </div>
-      <div style={{borderTop:"2px solid #E8F3DC",marginTop:12,paddingTop:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div><div style={{fontSize:14,fontWeight:700,color:"#2D5016"}}>Reunion Fee Budget</div><div style={{fontSize:12,color:"#7A6B5A"}}>{attendees} expected attendees · per-person fees cover this amount</div></div>
-        <div style={{fontSize:28,fontWeight:800,color:"#2D5016"}}>${feeBudget.toLocaleString()}</div>
-      </div>
-      <div style={{marginTop:10,padding:"10px 14px",background:"#FFF8EC",borderRadius:8,border:"1px solid #E8DFD0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div><div style={{fontSize:13,color:"#8B7355"}}>🏨 Hotel Event Room</div><div style={{fontSize:11,color:"#9A8B7A"}}>Listed for transparency — each family pays their own hotel separately</div></div>
-        <div style={{fontSize:16,fontWeight:700,color:"#C4963A"}}>${budget.eventRoom.toLocaleString()}</div>
-      </div>
+      <div style={{borderTop:"2px solid #E8F3DC",marginTop:12,paddingTop:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:14,fontWeight:700,color:"#2D5016"}}>Total Reunion Fee Budget</div><div style={{fontSize:12,color:"#7A6B5A"}}>{attendees} expected · per-person fees cover this</div></div><div style={{fontSize:28,fontWeight:800,color:"#2D5016"}}>${feeBudget.toLocaleString()}</div></div>
+      <div style={{marginTop:10,padding:"10px 14px",background:"#FFF8EC",borderRadius:8,border:"1px solid #E8DFD0",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{fontSize:13,color:"#8B7355"}}>🏨 Hotel Event Room</div><div style={{fontSize:11,color:"#9A8B7A"}}>Transparency — each family pays hotel separately</div></div><div style={{fontSize:16,fontWeight:700,color:"#C4963A"}}>${budget.eventRoom.toLocaleString()}</div></div>
     </div>
 
-    {/* Confirmed attendees by age group chart */}
-    <div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0",marginBottom:16}}>
-      <div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:2}}>Confirmed Attendees by Age Group</div>
-      <p style={{fontSize:12,color:"#7A6B5A",margin:"0 0 12px"}}>{totalConfirmed} confirmed attendee{totalConfirmed===1?"":"s"} (status "Going") — includes registered children under 18. Make sure ages are entered so we can plan accurately.</p>
-      {totalConfirmed > 0 ? (
-        <div style={{width:"100%",height:220}}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={ageChartData} margin={{top:5,right:20,left:0,bottom:5}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/>
-              <XAxis dataKey="name" tick={{fontSize:11,fill:"#7A6B5A"}}/>
-              <YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/>
-              <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=ageChartData.find(x=>x.name===label);return (<div style={{background:"rgba(59,47,30,.92)",borderRadius:8,padding:"8px 12px",color:"#fff",fontSize:12}}><div style={{fontWeight:600}}>{label}</div><div>Count: <strong>{payload[0].value}</strong></div><div>Rate: <strong>{d?.rate}</strong></div></div>);}}/>
-              <Bar dataKey="count" radius={[6,6,0,0]} barSize={40}>
-                {ageChartData.map((e,i)=> <Cell key={i} fill={i===0?"#6AAF3D":i===1?"#4A8C28":i===2?"#2D5016":i===3?"#D4A843":"#9A8B7A"}/>)}
-                <LabelList dataKey="count" position="top" style={{fontSize:13,fontWeight:700,fill:"#2D5016"}} formatter={v=>v>0?v:""}/>
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      ) : (
-        <div style={{textAlign:"center",padding:20,color:"#9A8B7A",fontStyle:"italic",fontSize:13}}>No one has confirmed "Going" yet. Check the Attendance tab to update RSVPs.</div>
-      )}
-      {totalConfirmed > 0 && (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:6,marginTop:8}}>
-          {ageChartData.filter(d=>d.count>0).map(d=>(
-            <div key={d.name} style={{padding:"6px 10px",background:"#F5FAEF",borderRadius:6,border:"1px solid #D4DFC8",textAlign:"center",fontSize:12}}>
-              <div style={{fontWeight:600,color:"#2D5016"}}>{d.count}</div>
-              <div style={{color:"#7A6B5A"}}>{d.name}</div>
-              <div style={{color:"#4A7A28",fontWeight:600}}>{d.rate}</div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-
-    {/* Age tier rates */}
+    {/* AGE TIERS */}
     <div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0",marginBottom:16}}>
       <div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:4}}>Age-Based Pricing Tiers</div>
-      <p style={{fontSize:12,color:"#7A6B5A",margin:"0 0 12px"}}>Costs are shared based on age. Fixed rates for the youngest and oldest; the full rate covers the difference.</p>
+      <p style={{fontSize:12,color:"#7A6B5A",margin:"0 0 12px"}}>Costs shared by age. Dollar amounts established after attendance and expenses are known.</p>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
-        <div style={{padding:12,background:"#E8F3DC",borderRadius:8,textAlign:"center"}}><div style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Under 12</div><div style={{fontSize:20,fontWeight:800,color:"#2D5016"}}>${RATE_U12}</div><div style={{fontSize:10,color:"#7A6B5A"}}>Fixed</div></div>
+        <div style={{padding:12,background:"#E8F3DC",borderRadius:8,textAlign:"center"}}><div style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Ages 0–12</div><div style={{fontSize:20,fontWeight:800,color:"#2D5016"}}>${RATE_U12}</div><div style={{fontSize:10,color:"#7A6B5A"}}>Reduced Child</div></div>
         <div style={{padding:12,background:"#F5FAEF",borderRadius:8,textAlign:"center"}}><div style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Ages 13–26</div><div style={{fontSize:20,fontWeight:800,color:"#2D5016"}}>60%</div><div style={{fontSize:10,color:"#7A6B5A"}}>of Full Rate</div></div>
         <div style={{padding:12,background:"#2D5016",borderRadius:8,textAlign:"center",color:"#fff"}}><div style={{fontSize:11,fontWeight:600,opacity:.8}}>Ages 27–74</div><div style={{fontSize:20,fontWeight:800}}>Full Rate</div><div style={{fontSize:10,opacity:.7}}>See scenarios</div></div>
-        <div style={{padding:12,background:"#FFF8EC",borderRadius:8,textAlign:"center"}}><div style={{fontSize:11,color:"#C4963A",fontWeight:600}}>Age 75+</div><div style={{fontSize:20,fontWeight:800,color:"#C4963A"}}>${RATE_75}</div><div style={{fontSize:10,color:"#7A6B5A"}}>Fixed</div></div>
+        <div style={{padding:12,background:"#FFF8EC",borderRadius:8,textAlign:"center"}}><div style={{fontSize:11,color:"#C4963A",fontWeight:600}}>Age 75+</div><div style={{fontSize:20,fontWeight:800,color:"#C4963A"}}>${RATE_75}</div><div style={{fontSize:10,color:"#7A6B5A"}}>Reduced Senior</div></div>
       </div>
     </div>
 
-    {/* Scenario table */}
-    <div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0"}}>
+    {/* SCENARIOS */}
+    <div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0",marginBottom:16}}>
       <div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:4}}>Cost Per Person by Family Scenario</div>
-      <p style={{fontSize:12,color:"#7A6B5A",margin:"0 0 14px"}}>Different families have different age mixes. Find the scenario closest to your family to see what you'd pay.</p>
-      <div style={{overflowX:"auto"}}>
-        <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-          <thead><tr style={{background:"#F5FAEF"}}>
-            <th style={{padding:"10px 8px",textAlign:"left",borderBottom:"2px solid #C8DFB0",fontWeight:700,color:"#2D5016"}}>Scenario</th>
-            <th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontSize:11,color:"#4A7A28"}}>Under 12<br/>(${RATE_U12})</th>
-            <th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontSize:11,color:"#4A7A28"}}>13–26<br/>(60%)</th>
-            <th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontSize:11,color:"#4A7A28"}}>27–74<br/>(Full)</th>
-            <th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontSize:11,color:"#C4963A"}}>75+<br/>(${RATE_75})</th>
-            <th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontWeight:700,color:"#2D5016"}}>Full Rate</th>
-            <th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontWeight:700,color:"#2D5016"}}>13–26 Rate</th>
-          </tr></thead>
-          <tbody>
-            {SCENARIOS.map((s,i)=>{
-              const fullRate = calcFullRate(s);
-              const teenRate = fullRate * TEEN_DISCOUNT;
-              return (<tr key={s.name} style={{background:i%2===0?"#fff":"#FDFCF9"}}>
-                <td style={{padding:"10px 8px",fontWeight:600,borderBottom:"1px solid #F0EAE0"}}>{s.name}</td>
-                <td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0"}}>{Math.round(s.u12*100)}%</td>
-                <td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0"}}>{Math.round(s.t13*100)}%</td>
-                <td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0"}}>{Math.round(s.a27*100)}%</td>
-                <td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0"}}>{Math.round(s.s75*100)}%</td>
-                <td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0",fontWeight:800,color:"#2D5016",fontSize:16}}>${Math.round(fullRate)}</td>
-                <td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0",fontWeight:600,color:"#4A7A28"}}>${Math.round(teenRate)}</td>
-              </tr>);
-            })}
-          </tbody>
-        </table>
-      </div>
-      <div style={{marginTop:12,fontSize:12,color:"#9A8B7A",lineHeight:1.5}}>
-        The <strong>Full Rate</strong> is what each person aged 27–74 would pay to cover the reunion fee budget of ${feeBudget.toLocaleString()} across {attendees} attendees. Hotel costs are separate — each family books and pays their own room. Ages 13–26 pay 60% of the full rate. Under 12 and 75+ have fixed rates regardless of scenario.
-      </div>
+      <p style={{fontSize:12,color:"#7A6B5A",margin:"0 0 14px"}}>The fee varies by age mix. Find your family's closest scenario.</p>
+      <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}><thead><tr style={{background:"#F5FAEF"}}><th style={{padding:"10px 8px",textAlign:"left",borderBottom:"2px solid #C8DFB0",fontWeight:700,color:"#2D5016"}}>Scenario</th><th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontSize:11,color:"#4A7A28"}}>0–12</th><th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontSize:11,color:"#4A7A28"}}>13–26</th><th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontSize:11,color:"#4A7A28"}}>27–74</th><th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontSize:11,color:"#C4963A"}}>75+</th><th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontWeight:700,color:"#2D5016"}}>Full Rate</th><th style={{padding:"10px 8px",textAlign:"center",borderBottom:"2px solid #C8DFB0",fontWeight:700,color:"#2D5016"}}>13–26</th></tr></thead><tbody>{SCENARIOS.map((s,i)=>{const fr=calcFR(s);const tr2=fr*TEEN_DISCOUNT;return (<tr key={s.name} style={{background:i%2===0?"#fff":"#FDFCF9"}}><td style={{padding:"10px 8px",fontWeight:600,borderBottom:"1px solid #F0EAE0"}}>{s.name}</td><td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0"}}>{Math.round(s.u12*100)}%</td><td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0"}}>{Math.round(s.t13*100)}%</td><td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0"}}>{Math.round(s.a27*100)}%</td><td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0"}}>{Math.round(s.s75*100)}%</td><td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0",fontWeight:800,color:"#2D5016",fontSize:16}}>${Math.round(fr)}</td><td style={{padding:"10px 8px",textAlign:"center",borderBottom:"1px solid #F0EAE0",fontWeight:600,color:"#4A7A28"}}>${Math.round(tr2)}</td></tr>);})}</tbody></table></div>
+      <div style={{marginTop:12,fontSize:12,color:"#9A8B7A",lineHeight:1.5}}>The <strong>Full Rate</strong> covers the reunion fee budget of ${feeBudget.toLocaleString()} across {attendees} attendees. Hotel is separate. Ages 13–26 pay 60%. Under 12 and 75+ have fixed rates.</div>
+    </div>
+
+    {/* AGE CHART */}
+    <div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0"}}>
+      <div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:2}}>Confirmed Attendees by Age Group</div>
+      <p style={{fontSize:12,color:"#7A6B5A",margin:"0 0 12px"}}>{tc} confirmed — includes children under 18.</p>
+      {tc>0?(<div style={{width:"100%",height:220}}><ResponsiveContainer width="100%" height="100%"><BarChart data={acd} margin={{top:5,right:20,left:0,bottom:5}}><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/><XAxis dataKey="name" tick={{fontSize:11,fill:"#7A6B5A"}}/><YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/><Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=acd.find(x=>x.name===label);return (<div style={{background:"rgba(59,47,30,.92)",borderRadius:8,padding:"8px 12px",color:"#fff",fontSize:12}}><div style={{fontWeight:600}}>{label}</div><div>Count: <strong>{payload[0].value}</strong></div><div>Rate: <strong>{d?.rate}</strong></div></div>);}}/><Bar dataKey="count" radius={[6,6,0,0]} barSize={40}>{acd.map((e,i)=> <Cell key={i} fill={i===0?"#6AAF3D":i===1?"#4A8C28":i===2?"#2D5016":i===3?"#D4A843":"#9A8B7A"}/>)}<LabelList dataKey="count" position="top" style={{fontSize:13,fontWeight:700,fill:"#2D5016"}} formatter={v=>v>0?v:""}/></Bar></BarChart></ResponsiveContainer></div>):(<div style={{textAlign:"center",padding:20,color:"#9A8B7A",fontStyle:"italic",fontSize:13}}>No confirmed attendees yet. Check the Attendance tab.</div>)}
     </div>
   </div>);
 }
