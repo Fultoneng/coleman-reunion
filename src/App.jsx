@@ -69,20 +69,13 @@ const store = {
 /* ═══ FAMILY PASSKEY — change this to update the passkey ═══ */
 const FAMILY_PASSKEY = "Aurthur_OrmaRee_13";
 
-/* ═══ MAIN APP ═══ */
+/* ═══ MAIN APP — auth wrapper only ═══ */
 export default function ColemanReunion(){
   const[authed,setAuthed]=useState(false);
   const[authChecked,setAuthChecked]=useState(false);
   const[passInput,setPassInput]=useState("");
   const[passError,setPassError]=useState(false);
-  const[members,setMembers]=useState(INITIAL_MEMBERS);
-  const[page,setPage]=useState("tree");
-  const[editTargetId,setEditTargetId]=useState(null);
-  const[loaded,setLoaded]=useState(false);
-  const[saveMsg,setSaveMsg]=useState("");
-  const[showHelp,setShowHelp]=useState(false);
 
-  // Check if already authenticated
   useEffect(()=>{(async()=>{try{const r=await store.get("coleman-auth");if(r?.value===FAMILY_PASSKEY)setAuthed(true);}catch{}setAuthChecked(true);})();},[]);
 
   const handleLogin=async()=>{
@@ -91,10 +84,8 @@ export default function ColemanReunion(){
       try{await store.set("coleman-auth",FAMILY_PASSKEY);}catch{}
     }else{setPassError(true);}
   };
-
   const handleKeyDown=(e)=>{if(e.key==="Enter")handleLogin();};
 
-  // Lock screen
   if(!authChecked)return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"Georgia,serif",color:"#3B2F1E",background:"#FAF7F2"}}>Loading…</div>;
 
   if(!authed)return (
@@ -120,7 +111,19 @@ export default function ColemanReunion(){
     </div>
   );
 
-  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-v8");if(r?.value){const p=JSON.parse(r.value);if(Array.isArray(p)&&p.length>0)setMembers(p);}}catch{}setLoaded(true);})();},[]);
+  return <AppContent />;
+}
+
+/* ═══ APP CONTENT — only mounts after auth ═══ */
+function AppContent(){
+  const[members,setMembers]=useState(INITIAL_MEMBERS);
+  const[page,setPage]=useState("tree");
+  const[editTargetId,setEditTargetId]=useState(null);
+  const[loaded,setLoaded]=useState(false);
+  const[saveMsg,setSaveMsg]=useState("");
+  const[showHelp,setShowHelp]=useState(false);
+
+  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-v8");if(r?.value){const p=JSON.parse(r.value);if(Array.isArray(p)&&p.length>0)setMembers(p);}}catch(e){console.error("Load error:",e);}setLoaded(true);})();},[]);
   const saveData=useCallback(async(data)=>{try{await store.set("coleman-v8",JSON.stringify(data));setSaveMsg("Saved");setTimeout(()=>setSaveMsg(""),1500);}catch{}},[]);
   const updateMember=(id,u)=>{const n=members.map(m=>m.id===id?{...m,...u}:m);setMembers(n);saveData(n);};
   const addMember=(member)=>{const rb=findRootBranch(member.parentId,members)||member.parentId;const n=[...members,{...member,id:genId(),parentRootId:rb}];setMembers(n);saveData(n);};
