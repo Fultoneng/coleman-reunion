@@ -43,6 +43,29 @@ function buildParentOpts(ms){return ms.filter(m=>m.isRootChild).map(r=>({root:r,
 function getDepth(m,ms){let d=0;let c=m;const v=new Set();while(c&&!c.isRootChild&&!v.has(c.id)){v.add(c.id);d++;c=ms.find(x=>x.id===c.parentId);}return d;}
 function HaloSVG({size=16}){return (<svg width={size} height={size*0.65} viewBox="0 0 24 15" style={{display:"inline-block",verticalAlign:"middle"}}><ellipse cx="12" cy="9" rx="9" ry="4" fill="none" stroke="#D4A843" strokeWidth="2.2" opacity="0.85"/><ellipse cx="12" cy="9" rx="9" ry="4" fill="none" stroke="#F5E6B8" strokeWidth="1" opacity="0.5"/></svg>);}
 
+/* ═══ STORAGE — works in Claude artifacts AND deployed sites ═══ */
+const store = {
+  async get(key) {
+    try {
+      if (typeof window !== 'undefined' && window.storage && window.storage.get) {
+        return await store.get(key);
+      }
+    } catch {}
+    try {
+      const v = localStorage.getItem(key);
+      return v !== null ? { value: v } : null;
+    } catch { return null; }
+  },
+  async set(key, value) {
+    try {
+      if (typeof window !== 'undefined' && window.storage && window.storage.set) {
+        return await store.set(key, value);
+      }
+    } catch {}
+    try { localStorage.setItem(key, value); return { key, value }; } catch { return null; }
+  }
+};
+
 /* ═══ FAMILY PASSKEY — change this to update the passkey ═══ */
 const FAMILY_PASSKEY = "Aurthur_OrmaRee_13";
 
@@ -60,12 +83,12 @@ export default function ColemanReunion(){
   const[showHelp,setShowHelp]=useState(false);
 
   // Check if already authenticated
-  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-auth");if(r?.value===FAMILY_PASSKEY)setAuthed(true);}catch{}setAuthChecked(true);})();},[]);
+  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-auth");if(r?.value===FAMILY_PASSKEY)setAuthed(true);}catch{}setAuthChecked(true);})();},[]);
 
   const handleLogin=async()=>{
     if(passInput.trim()===FAMILY_PASSKEY){
       setAuthed(true);setPassError(false);
-      try{await window.storage.set("coleman-auth",FAMILY_PASSKEY);}catch{}
+      try{await store.set("coleman-auth",FAMILY_PASSKEY);}catch{}
     }else{setPassError(true);}
   };
 
@@ -97,8 +120,8 @@ export default function ColemanReunion(){
     </div>
   );
 
-  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-v8");if(r?.value){const p=JSON.parse(r.value);if(Array.isArray(p)&&p.length>0)setMembers(p);}}catch{}setLoaded(true);})();},[]);
-  const saveData=useCallback(async(data)=>{try{await window.storage.set("coleman-v8",JSON.stringify(data));setSaveMsg("Saved");setTimeout(()=>setSaveMsg(""),1500);}catch{}},[]);
+  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-v8");if(r?.value){const p=JSON.parse(r.value);if(Array.isArray(p)&&p.length>0)setMembers(p);}}catch{}setLoaded(true);})();},[]);
+  const saveData=useCallback(async(data)=>{try{await store.set("coleman-v8",JSON.stringify(data));setSaveMsg("Saved");setTimeout(()=>setSaveMsg(""),1500);}catch{}},[]);
   const updateMember=(id,u)=>{const n=members.map(m=>m.id===id?{...m,...u}:m);setMembers(n);saveData(n);};
   const addMember=(member)=>{const rb=findRootBranch(member.parentId,members)||member.parentId;const n=[...members,{...member,id:genId(),parentRootId:rb}];setMembers(n);saveData(n);};
   const deleteMember=(id)=>{const m=members.find(x=>x.id===id);if(m?.isRootParent||m?.isRootChild)return;setMembers(p=>{const n=p.filter(x=>x.id!==id);saveData(n);return n;});};
@@ -404,9 +427,9 @@ function ByLawsPage({rootChildren}){
 /* ═══ REUNION PLANNER — role assignment + first reunion vote ═══ */
 function ReunionPage(){
   const[roles,setRoles]=useState({});const[votes,setVotes]=useState({});const[saved,setSaved]=useState(false);
-  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-roles-v2");if(r?.value)setRoles(JSON.parse(r.value));}catch{} try{const r2=await window.storage.get("coleman-first-vote");if(r2?.value)setVotes(JSON.parse(r2.value));}catch{}})();},[]);
-  const saveRoles=async(d)=>{setRoles(d);try{await window.storage.set("coleman-roles-v2",JSON.stringify(d));setSaved(true);setTimeout(()=>setSaved(false),2000);}catch{}};
-  const saveVotes=async(d)=>{setVotes(d);try{await window.storage.set("coleman-first-vote",JSON.stringify(d));}catch{}};
+  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-roles-v2");if(r?.value)setRoles(JSON.parse(r.value));}catch{} try{const r2=await store.get("coleman-first-vote");if(r2?.value)setVotes(JSON.parse(r2.value));}catch{}})();},[]);
+  const saveRoles=async(d)=>{setRoles(d);try{await store.set("coleman-roles-v2",JSON.stringify(d));setSaved(true);setTimeout(()=>setSaved(false),2000);}catch{}};
+  const saveVotes=async(d)=>{setVotes(d);try{await store.set("coleman-first-vote",JSON.stringify(d));}catch{}};
   const setRole=(id,val)=>{const n={...roles,[id]:val};saveRoles(n);};
   const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};
 
@@ -530,8 +553,8 @@ function CostsPage({members}){
   const [attendees,setAttendees]=useState(75);
   const [saved,setSaved]=useState(false);
   const [rsvps,setRsvps]=useState({});
-  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-budget");if(r?.value){const d=JSON.parse(r.value);setBudget(d.budget||budget);setAttendees(d.attendees||75);}}catch{}try{const r2=await window.storage.get("coleman-rsvp");if(r2?.value)setRsvps(JSON.parse(r2.value));}catch{}})();},[]);
-  const saveBudget=async()=>{try{await window.storage.set("coleman-budget",JSON.stringify({budget,attendees}));setSaved(true);setTimeout(()=>setSaved(false),2000);}catch{}};
+  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-budget");if(r?.value){const d=JSON.parse(r.value);setBudget(d.budget||budget);setAttendees(d.attendees||75);}}catch{}try{const r2=await store.get("coleman-rsvp");if(r2?.value)setRsvps(JSON.parse(r2.value));}catch{}})();},[]);
+  const saveBudget=async()=>{try{await store.set("coleman-budget",JSON.stringify({budget,attendees}));setSaved(true);setTimeout(()=>setSaved(false),2000);}catch{}};
   const feeBudget=budget.picnic+budget.activity+budget.breakfast;
   const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};
   const ls={display:"block",fontSize:12,fontWeight:600,color:"#4A7A28",marginBottom:4,marginTop:10};
@@ -686,9 +709,9 @@ function AttendancePage({members,rootChildren,updateMember}){
   const [guestForm,setGuestForm] = useState({name:"",age:""});
   const [addingFor,setAddingFor] = useState(null);
 
-  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-rsvp");if(r?.value)setRsvps(JSON.parse(r.value));}catch{} try{const r2=await window.storage.get("coleman-guests");if(r2?.value)setGuests(JSON.parse(r2.value));}catch{}})();},[]);
-  const saveRsvp=async(id,status)=>{const next={...rsvps,[id]:status};setRsvps(next);try{await window.storage.set("coleman-rsvp",JSON.stringify(next));}catch{}};
-  const saveGuests=async(id,list)=>{const next={...guests,[id]:list};setGuests(next);try{await window.storage.set("coleman-guests",JSON.stringify(next));}catch{}};
+  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-rsvp");if(r?.value)setRsvps(JSON.parse(r.value));}catch{} try{const r2=await store.get("coleman-guests");if(r2?.value)setGuests(JSON.parse(r2.value));}catch{}})();},[]);
+  const saveRsvp=async(id,status)=>{const next={...rsvps,[id]:status};setRsvps(next);try{await store.set("coleman-rsvp",JSON.stringify(next));}catch{}};
+  const saveGuests=async(id,list)=>{const next={...guests,[id]:list};setGuests(next);try{await store.set("coleman-guests",JSON.stringify(next));}catch{}};
   const addGuest=(memberId)=>{if(!guestForm.name.trim())return;const cur=guests[memberId]||[];saveGuests(memberId,[...cur,{name:guestForm.name,age:guestForm.age}]);setGuestForm({name:"",age:""});};
   const removeGuest=(memberId,idx)=>{const cur=[...(guests[memberId]||[])];cur.splice(idx,1);saveGuests(memberId,cur);};
 
@@ -776,7 +799,7 @@ function CC({title,sub,children}){return (<div style={{background:"#fff",borderR
 
 function TrackerPage(){
   const[resp,setResp]=useState([]);
-  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-reunion-r2");if(r?.value)setResp(JSON.parse(r.value));}catch{}})();},[]);
+  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-reunion-r2");if(r?.value)setResp(JSON.parse(r.value));}catch{}})();},[]);
   const t=resp.length;
   if(t===0)return (<div style={{maxWidth:800,margin:"0 auto",textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:48,marginBottom:16}}>📊</div><h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 8px",fontSize:22}}>No Results Yet</h2><p style={{color:"#7A6B5A",fontSize:14}}>Submit preferences on the Planner tab to see results here.</p></div>);
 
