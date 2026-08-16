@@ -107,7 +107,7 @@ export default function ColemanReunion(){
 /* ═══ SHARED COMPONENTS ═══ */
 function ParentSelector({members,value,onChange,label}){const gs=buildParentOpts(members);const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};return (<div><label style={{display:"block",fontSize:12,fontWeight:600,color:"#4A7A28",marginBottom:4,marginTop:14}}>{label||"Parent"}</label><select style={is} value={value} onChange={e=>onChange(e.target.value)}><option value="">Select parent…</option>{gs.map(g=>(<optgroup key={g.root.id} label={`${g.root.name}${g.root.isDeceased?" ✝":""}`}><option value={g.root.id}>↳ Child of {g.root.name.split(/[\s(]/)[0]}</option>{g.desc.map(d=>{const indent="— ".repeat(getDepth(d,members)-1);return <option key={d.id} value={d.id}>{indent}↳ Child of {d.name}</option>;})}</optgroup>))}</select></div>);}
 
-function ChildrenU18({children,onChange}){const[cn,setCn]=useState("");const[ca,setCa]=useState("");const[cb,setCb]=useState("");const add=()=>{if(!cn.trim())return;onChange([...(children||[]),{name:cn,age:ca,birthMonth:cb}]);setCn("");setCa("");setCb("");};const is={width:"100%",padding:"8px 10px",border:"1px solid #C8DFB0",borderRadius:6,fontSize:14,background:"#fff",boxSizing:"border-box"};return(<div style={{marginTop:16,padding:12,background:"#F5FAEF",borderRadius:8,border:"1px solid #C8DFB0"}}><div style={{fontSize:13,fontWeight:600,color:"#4A7A28",marginBottom:8}}>Children Under 18</div>{(children||[]).map((c,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,fontSize:13,padding:"6px 8px",background:"#fff",borderRadius:6,border:"1px solid #E8DFD0"}}><div style={{flex:1}}><div style={{fontWeight:500}}>{c.name}</div><div style={{fontSize:11,color:"#8B7355"}}>{c.age&&`Age ${c.age}`}{c.age&&c.birthMonth&&" · "}{c.birthMonth&&`Born ${c.birthMonth}`}</div></div><button onClick={()=>onChange(children.filter((_,x)=>x!==i))} style={{background:"none",border:"none",color:"#C77",cursor:"pointer",fontSize:12}}>remove</button></div>))}<div style={{display:"grid",gridTemplateColumns:"2fr 1fr 2fr",gap:6,marginTop:6}}><input placeholder="Name" value={cn} onChange={e=>setCn(e.target.value)} style={is}/><input placeholder="Age" type="number" value={ca} onChange={e=>setCa(e.target.value)} style={is}/><select value={cb} onChange={e=>setCb(e.target.value)} style={is}><option value="">Month…</option>{MONTHS.map(m=><option key={m}>{m}</option>)}</select></div><button onClick={add} style={{marginTop:8,padding:"8px 16px",background:"#4A7A28",color:"#fff",border:"none",borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:600,width:"100%"}}>+ Add Child Under 18</button></div>);}
+function ChildrenU18({children,onChange}){const[cn,setCn]=useState("");const[ca,setCa]=useState("");const[cb,setCb]=useState("");const[cd,setCd]=useState(false);const add=()=>{if(!cn.trim())return;onChange([...(children||[]),{name:cn,age:ca,birthMonth:cb,deceased:cd}]);setCn("");setCa("");setCb("");setCd(false);};const is={width:"100%",padding:"8px 10px",border:"1px solid #C8DFB0",borderRadius:6,fontSize:13,background:"#fff",boxSizing:"border-box"};return(<div style={{marginTop:0,padding:14,background:"#F5FAEF",borderRadius:10,border:"1px solid #C8DFB0"}}><div style={{fontSize:13,fontWeight:700,color:"#4A7A28",marginBottom:8}}>Children Under 18</div>{(children||[]).map((c,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,fontSize:13,padding:"8px 10px",background:"#fff",borderRadius:6,border:"1px solid #E8DFD0"}}><div style={{flex:1}}><div style={{fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{c.deceased&&<HaloSVG size={12}/>}{c.name}</div><div style={{fontSize:11,color:"#8B7355"}}>{c.age&&`Age ${c.age}`}{c.age&&c.birthMonth&&" · "}{c.birthMonth&&`Born ${c.birthMonth}`}{c.deceased&&" · Passed away"}</div></div><button onClick={()=>onChange(children.filter((_,x)=>x!==i))} style={{background:"none",border:"none",color:"#C77",cursor:"pointer",fontSize:12}}>✕</button></div>))}<div style={{display:"grid",gridTemplateColumns:"3fr 1fr 2fr auto",gap:6,marginTop:8,alignItems:"end"}}><div><label style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Name</label><input placeholder="Child's name" value={cn} onChange={e=>setCn(e.target.value)} style={is}/></div><div><label style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Age</label><input placeholder="Age" type="number" value={ca} onChange={e=>setCa(e.target.value)} style={is}/></div><div><label style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Birth Month</label><select value={cb} onChange={e=>setCb(e.target.value)} style={is}><option value="">Select…</option>{MONTHS.map(m=><option key={m}>{m}</option>)}</select></div><div style={{paddingBottom:2}}><label style={{display:"flex",alignItems:"center",gap:4,fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}><input type="checkbox" checked={cd} onChange={e=>setCd(e.target.checked)} style={{accentColor:"#D4A843"}}/>Passed</label></div></div><button onClick={add} style={{marginTop:10,padding:"8px 16px",background:"#4A7A28",color:"#fff",border:"none",borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:600,width:"100%"}}>+ Add Child</button></div>);}
 
 /* ═══ TREE WRAPPER ═══ */
 function TreeWrapper({members,rootChildren,goEdit}){const[view,setView]=useState("list");return(<div>
@@ -200,15 +200,19 @@ function ListView({members,rootChildren,goEdit}){
 
 /* ═══ FORM PAGE ═══ */
 function FormPage({members,rootChildren,addMember,updateMember,editTargetId,setEditTargetId}){
-  const bl={name:"",age:"",birthMonth:"",city:"",state:"",spouse:"",phone:"",email:"",isDeceased:false,isRootChild:false,parentId:"",childrenUnder18:[]};
+  const bl={name:"",age:"",birthMonth:"",city:"",state:"",spouse:"",spouseAge:"",spouseBirthMonth:"",spouseDeceased:false,phone:"",email:"",phone2:"",email2:"",isDeceased:false,isRootChild:false,parentId:"",childrenUnder18:[]};
   const[mode,setMode]=useState(editTargetId?"edit":"add");const[editId,setEditId]=useState(editTargetId||"");const[form,setForm]=useState(bl);const[added,setAdded]=useState([]);const[saveNote,setSaveNote]=useState("");
   const s=(k,v)=>setForm(p=>({...p,[k]:v}));
   useEffect(()=>{if(editTargetId){setMode("edit");loadM(editTargetId);}},[editTargetId]);
-  const loadM=id=>{if(!id){setForm(bl);setEditId("");return;}const m=members.find(x=>x.id===id);if(m){setForm({name:m.name||"",age:m.age||"",birthMonth:m.birthMonth||"",city:m.city||"",state:m.state||"",spouse:m.spouse||"",phone:m.phone||"",email:m.email||"",isDeceased:m.isDeceased||false,isRootChild:m.isRootChild||false,parentId:m.parentId||"",childrenUnder18:m.childrenUnder18||[]});setEditId(id);}};
+  const loadM=id=>{if(!id){setForm(bl);setEditId("");return;}const m=members.find(x=>x.id===id);if(m){setForm({name:m.name||"",age:m.age||"",birthMonth:m.birthMonth||"",city:m.city||"",state:m.state||"",spouse:m.spouse||"",spouseAge:m.spouseAge||"",spouseBirthMonth:m.spouseBirthMonth||"",spouseDeceased:m.spouseDeceased||false,phone:m.phone||"",email:m.email||"",phone2:m.phone2||"",email2:m.email2||"",isDeceased:m.isDeceased||false,isRootChild:m.isRootChild||false,parentId:m.parentId||"",childrenUnder18:m.childrenUnder18||[]});setEditId(id);}};
   const sub=()=>{if(mode==="edit"){if(!editId)return alert("Select a member to edit.");updateMember(editId,form);setSaveNote(`Updated ${form.name}`);setTimeout(()=>setSaveNote(""),3000);}else{if(!form.name.trim()||!form.parentId)return alert("Enter a name and select a parent.");addMember(form);setAdded(p=>[...p,form.name]);setForm(bl);}};
   const sw=m=>{setMode(m);setForm(bl);setEditId("");setSaveNote("");setEditTargetId(null);};
-  const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};const ls={display:"block",fontSize:12,fontWeight:600,color:"#4A7A28",marginBottom:4,marginTop:14};
-  return (<div style={{maxWidth:640,margin:"0 auto"}}>
+  const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};
+  const ls={display:"block",fontSize:11,fontWeight:600,color:"#4A7A28",marginBottom:3};
+  const secStyle={background:"#F5FAEF",borderRadius:10,padding:14,border:"1px solid #C8DFB0",marginTop:14};
+  const secTitle=(icon,text)=>(<div style={{fontSize:13,fontWeight:700,color:"#2D5016",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>{icon} {text}</div>);
+
+  return (<div style={{maxWidth:860,margin:"0 auto"}}>
     <h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>{mode==="add"?"Add Family Members":"Edit Family Member"}</h2>
     <p style={{color:"#7A6B5A",fontSize:13,margin:"0 0 14px",lineHeight:1.5}}>{mode==="add"?"Select the parent — any root sibling or existing member.":"Select a member to update their information."}</p>
     <div style={{display:"flex",background:"#E8F3DC",borderRadius:8,overflow:"hidden",border:"1px solid #B8D4A0",marginBottom:14}}>
@@ -216,22 +220,60 @@ function FormPage({members,rootChildren,addMember,updateMember,editTargetId,setE
       <button onClick={()=>sw("edit")} style={{flex:1,padding:"10px",border:"none",cursor:"pointer",fontSize:13,fontWeight:600,background:mode==="edit"?"#2D5016":"transparent",color:mode==="edit"?"#fff":"#2D5016"}}>✏️ Edit Existing</button>
     </div>
     <div style={{background:"#fff",borderRadius:14,padding:20,border:"1px solid #C8DFB0"}}>
-      {mode==="edit"&&(<div style={{marginBottom:14}}><label style={{...ls,marginTop:0}}>Select member to edit</label><select style={{...is,borderColor:editId?"#2D5016":"#C8DFB0",borderWidth:editId?2:1}} value={editId} onChange={e=>loadM(e.target.value)}><option value="">Choose…</option>{rootChildren.map(rc=>{const bm=getAllBranch(rc.id,members);return (<optgroup key={rc.id} label={`${rc.name}${rc.isDeceased?" ✝":""}`}><option value={rc.id}>{rc.name}</option>{bm.map(b=><option key={b.id} value={b.id}>{"  — "}{b.name}</option>)}</optgroup>);})}</select>{editId&&<div style={{marginTop:8,padding:"8px 12px",background:"#FFF8EC",borderRadius:8,border:"1px solid #E8DFD0",fontSize:12,color:"#8B7355"}}>Editing <strong style={{color:"#2D5016"}}>{form.name}</strong></div>}</div>)}
+      {mode==="edit"&&(<div style={{marginBottom:14}}><label style={{...ls,fontSize:12}}>Select member to edit</label><select style={{...is,borderColor:editId?"#2D5016":"#C8DFB0",borderWidth:editId?2:1}} value={editId} onChange={e=>loadM(e.target.value)}><option value="">Choose…</option>{rootChildren.map(rc=>{const bm=getAllBranch(rc.id,members);return (<optgroup key={rc.id} label={`${rc.name}${rc.isDeceased?" ✝":""}`}><option value={rc.id}>{rc.name}</option>{bm.map(b=><option key={b.id} value={b.id}>{"  — "}{b.name}</option>)}</optgroup>);})}</select>{editId&&<div style={{marginTop:8,padding:"8px 12px",background:"#FFF8EC",borderRadius:8,border:"1px solid #E8DFD0",fontSize:12,color:"#8B7355"}}>Editing <strong style={{color:"#2D5016"}}>{form.name}</strong></div>}</div>)}
       {mode==="add"&&<ParentSelector members={members} value={form.parentId} onChange={v=>s("parentId",v)} label="Who is this person's parent?"/>}
+
       {(mode==="add"||editId)&&(<>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 16px"}}>
-          <div><label style={ls}>Full Name *</label><input style={is} value={form.name} onChange={e=>s("name",e.target.value)} placeholder="First and Last Name"/></div>
-          <div><label style={ls}>Age</label><input style={is} type="number" value={form.age} onChange={e=>s("age",e.target.value)}/></div>
-          <div><label style={ls}>Birth Month</label><select style={is} value={form.birthMonth} onChange={e=>s("birthMonth",e.target.value)}><option value="">Select…</option>{MONTHS.map(m=><option key={m}>{m}</option>)}</select></div>
-          <div><label style={ls}>Spouse</label><input style={is} value={form.spouse} onChange={e=>s("spouse",e.target.value)}/></div>
-          <div><label style={ls}>City</label><input style={is} value={form.city} onChange={e=>s("city",e.target.value)}/></div>
-          <div><label style={ls}>State</label><select style={is} value={form.state} onChange={e=>s("state",e.target.value)}><option value="">Select…</option>{US_STATES.map(st=><option key={st} value={st}>{STATE_NAMES[st]}</option>)}</select></div>
-          <div><label style={ls}>Phone <span style={{fontWeight:400,color:"#9A8B7A"}}>(optional)</span></label><input style={is} type="tel" value={form.phone} onChange={e=>s("phone",e.target.value)} placeholder="(555) 123-4567"/></div>
-          <div><label style={ls}>Email <span style={{fontWeight:400,color:"#9A8B7A"}}>(optional)</span></label><input style={is} type="email" value={form.email} onChange={e=>s("email",e.target.value)} placeholder="name@email.com"/></div>
+        {/* ── MEMBER INFO ── */}
+        <div style={secStyle}>
+          {secTitle("👤","Member Information")}
+          <div style={{display:"grid",gridTemplateColumns:"3fr 1fr 2fr auto",gap:"0 12px",alignItems:"end"}}>
+            <div><label style={ls}>Full Name *</label><input style={is} value={form.name} onChange={e=>s("name",e.target.value)} placeholder="First and Last Name"/></div>
+            <div><label style={ls}>Age</label><input style={is} type="number" value={form.age} onChange={e=>s("age",e.target.value)}/></div>
+            <div><label style={ls}>Birth Month</label><select style={is} value={form.birthMonth} onChange={e=>s("birthMonth",e.target.value)}><option value="">Select…</option>{MONTHS.map(m=><option key={m}>{m}</option>)}</select></div>
+            <div style={{paddingBottom:4}}><label style={{display:"flex",alignItems:"center",gap:4,fontSize:12,cursor:"pointer",whiteSpace:"nowrap"}}><input type="checkbox" checked={form.isDeceased} onChange={e=>s("isDeceased",e.target.checked)} style={{accentColor:"#D4A843"}}/>Passed <HaloSVG size={12}/></label></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 12px",marginTop:10}}>
+            <div><label style={ls}>City</label><input style={is} value={form.city} onChange={e=>s("city",e.target.value)}/></div>
+            <div><label style={ls}>State</label><select style={is} value={form.state} onChange={e=>s("state",e.target.value)}><option value="">Select…</option>{US_STATES.map(st=><option key={st} value={st}>{STATE_NAMES[st]}</option>)}</select></div>
+          </div>
         </div>
-        <div style={{marginTop:14}}><label style={{display:"flex",alignItems:"center",gap:8,fontSize:13,cursor:"pointer"}}><input type="checkbox" checked={form.isDeceased} onChange={e=>s("isDeceased",e.target.checked)} style={{accentColor:"#D4A843"}}/> This person has passed away</label></div>
-        <ChildrenU18 children={form.childrenUnder18} onChange={v=>s("childrenUnder18",v)}/>
-        <button onClick={sub} style={{marginTop:20,padding:"12px 32px",background:mode==="edit"?"#C4963A":"#2D5016",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:15,fontWeight:700,width:"100%"}}>{mode==="edit"?"Save Changes":"Add to Family Tree"}</button>
+
+        {/* ── SPOUSE INFO ── */}
+        <div style={secStyle}>
+          {secTitle("💍","Spouse Information")}
+          <div style={{display:"grid",gridTemplateColumns:"3fr 1fr 2fr auto",gap:"0 12px",alignItems:"end"}}>
+            <div><label style={ls}>Spouse Name</label><input style={is} value={form.spouse} onChange={e=>s("spouse",e.target.value)} placeholder="Spouse full name"/></div>
+            <div><label style={ls}>Age</label><input style={is} type="number" value={form.spouseAge} onChange={e=>s("spouseAge",e.target.value)}/></div>
+            <div><label style={ls}>Birth Month</label><select style={is} value={form.spouseBirthMonth} onChange={e=>s("spouseBirthMonth",e.target.value)}><option value="">Select…</option>{MONTHS.map(m=><option key={m}>{m}</option>)}</select></div>
+            <div style={{paddingBottom:4}}><label style={{display:"flex",alignItems:"center",gap:4,fontSize:12,cursor:"pointer",whiteSpace:"nowrap"}}><input type="checkbox" checked={form.spouseDeceased||false} onChange={e=>s("spouseDeceased",e.target.checked)} style={{accentColor:"#D4A843"}}/>Passed <HaloSVG size={12}/></label></div>
+          </div>
+        </div>
+
+        {/* ── CHILDREN ── */}
+        <div style={{marginTop:14}}>
+          <ChildrenU18 children={form.childrenUnder18} onChange={v=>s("childrenUnder18",v)}/>
+        </div>
+
+        {/* ── CONTACT INFO ── */}
+        <div style={secStyle}>
+          {secTitle("📞","Primary Contact Information")}
+          <p style={{fontSize:12,color:"#7A6B5A",margin:"-6px 0 10px"}}>Space for both parents/guardians to provide contact info.</p>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div style={{padding:12,background:"#fff",borderRadius:8,border:"1px solid #E8DFD0"}}>
+              <div style={{fontSize:12,fontWeight:600,color:"#2D5016",marginBottom:8}}>Contact 1</div>
+              <div><label style={ls}>Phone</label><input style={is} type="tel" value={form.phone} onChange={e=>s("phone",e.target.value)} placeholder="(555) 123-4567"/></div>
+              <div style={{marginTop:8}}><label style={ls}>Email</label><input style={is} type="email" value={form.email} onChange={e=>s("email",e.target.value)} placeholder="name@email.com"/></div>
+            </div>
+            <div style={{padding:12,background:"#fff",borderRadius:8,border:"1px solid #E8DFD0"}}>
+              <div style={{fontSize:12,fontWeight:600,color:"#2D5016",marginBottom:8}}>Contact 2</div>
+              <div><label style={ls}>Phone</label><input style={is} type="tel" value={form.phone2||""} onChange={e=>s("phone2",e.target.value)} placeholder="(555) 123-4567"/></div>
+              <div style={{marginTop:8}}><label style={ls}>Email</label><input style={is} type="email" value={form.email2||""} onChange={e=>s("email2",e.target.value)} placeholder="name@email.com"/></div>
+            </div>
+          </div>
+        </div>
+
+        <button onClick={sub} style={{marginTop:20,padding:"14px 32px",background:mode==="edit"?"#C4963A":"#2D5016",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontSize:15,fontWeight:700,width:"100%"}}>{mode==="edit"?"Save Changes":"Add to Family Tree"}</button>
       </>)}
     </div>
     {saveNote&&<div style={{marginTop:12,background:"#FFF8EC",borderRadius:10,padding:14,border:"1px solid #E8DFD0",textAlign:"center"}}><span style={{fontSize:14,fontWeight:600,color:"#C4963A"}}>✓ {saveNote}</span></div>}
@@ -595,31 +637,41 @@ function CostsPage({members}){
 /* ═══ ATTENDANCE PAGE ═══ */
 function AttendancePage({members,rootChildren,updateMember}){
   const [rsvps,setRsvps] = useState({});
-  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-rsvp");if(r?.value)setRsvps(JSON.parse(r.value));}catch{}})();},[]);
+  const [guests,setGuests] = useState({});
+  const [guestForm,setGuestForm] = useState({name:"",age:""});
+  const [addingFor,setAddingFor] = useState(null);
+
+  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-rsvp");if(r?.value)setRsvps(JSON.parse(r.value));}catch{} try{const r2=await window.storage.get("coleman-guests");if(r2?.value)setGuests(JSON.parse(r2.value));}catch{}})();},[]);
   const saveRsvp=async(id,status)=>{const next={...rsvps,[id]:status};setRsvps(next);try{await window.storage.set("coleman-rsvp",JSON.stringify(next));}catch{}};
+  const saveGuests=async(id,list)=>{const next={...guests,[id]:list};setGuests(next);try{await window.storage.set("coleman-guests",JSON.stringify(next));}catch{}};
+  const addGuest=(memberId)=>{if(!guestForm.name.trim())return;const cur=guests[memberId]||[];saveGuests(memberId,[...cur,{name:guestForm.name,age:guestForm.age}]);setGuestForm({name:"",age:""});};
+  const removeGuest=(memberId,idx)=>{const cur=[...(guests[memberId]||[])];cur.splice(idx,1);saveGuests(memberId,cur);};
 
   const livingMembers = members.filter(m=>!m.isDeceased&&!m.isRootParent);
   const going = livingMembers.filter(m=>rsvps[m.id]==="going").length;
   const notGoing = livingMembers.filter(m=>rsvps[m.id]==="not-going").length;
   const maybe = livingMembers.filter(m=>rsvps[m.id]==="maybe").length;
   const noResp = livingMembers.filter(m=>!rsvps[m.id]).length;
+  const totalGuests = Object.values(guests).reduce((a,b)=>a+b.length,0);
 
   const statusStyle = (s) => ({
     padding:"4px 10px",borderRadius:12,fontSize:11,fontWeight:600,cursor:"pointer",border:"none",
     background:s==="going"?"#E8F3DC":s==="not-going"?"#F5E6E6":s==="maybe"?"#FFF8EC":"#F0EAE0",
     color:s==="going"?"#2D5016":s==="not-going"?"#933":s==="maybe"?"#C4963A":"#9A8B7A",
   });
+  const is={width:"100%",padding:"8px 10px",border:"1px solid #C8DFB0",borderRadius:6,fontSize:13,background:"#fff",boxSizing:"border-box"};
 
   return (<div style={{maxWidth:860,margin:"0 auto"}}>
     <h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Reunion Attendance</h2>
-    <p style={{color:"#7A6B5A",fontSize:13,margin:"0 0 16px"}}>See who's registered and their reunion RSVP status. Click the status buttons to update.</p>
+    <p style={{color:"#7A6B5A",fontSize:13,margin:"0 0 16px"}}>RSVP and add any guests you're bringing. Guest ages are needed for accurate cost calculation.</p>
 
     {/* Summary cards */}
-    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:16}}>
-      <div style={{padding:12,background:"#E8F3DC",borderRadius:10,textAlign:"center",border:"1px solid #B8D4A0"}}><div style={{fontSize:24,fontWeight:800,color:"#2D5016"}}>{going}</div><div style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Going</div></div>
-      <div style={{padding:12,background:"#FFF8EC",borderRadius:10,textAlign:"center",border:"1px solid #E8DFD0"}}><div style={{fontSize:24,fontWeight:800,color:"#C4963A"}}>{maybe}</div><div style={{fontSize:11,color:"#C4963A",fontWeight:600}}>Maybe</div></div>
-      <div style={{padding:12,background:"#F5E6E6",borderRadius:10,textAlign:"center",border:"1px solid #E0C8C8"}}><div style={{fontSize:24,fontWeight:800,color:"#933"}}>{notGoing}</div><div style={{fontSize:11,color:"#933",fontWeight:600}}>Not Going</div></div>
-      <div style={{padding:12,background:"#F0EAE0",borderRadius:10,textAlign:"center",border:"1px solid #D4C5AA"}}><div style={{fontSize:24,fontWeight:800,color:"#8B7355"}}>{noResp}</div><div style={{fontSize:11,color:"#8B7355",fontWeight:600}}>No Response</div></div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6,marginBottom:16}}>
+      <div style={{padding:10,background:"#E8F3DC",borderRadius:10,textAlign:"center",border:"1px solid #B8D4A0"}}><div style={{fontSize:22,fontWeight:800,color:"#2D5016"}}>{going}</div><div style={{fontSize:10,color:"#4A7A28",fontWeight:600}}>Going</div></div>
+      <div style={{padding:10,background:"#FFF8EC",borderRadius:10,textAlign:"center",border:"1px solid #E8DFD0"}}><div style={{fontSize:22,fontWeight:800,color:"#C4963A"}}>{maybe}</div><div style={{fontSize:10,color:"#C4963A",fontWeight:600}}>Maybe</div></div>
+      <div style={{padding:10,background:"#F5E6E6",borderRadius:10,textAlign:"center",border:"1px solid #E0C8C8"}}><div style={{fontSize:22,fontWeight:800,color:"#933"}}>{notGoing}</div><div style={{fontSize:10,color:"#933",fontWeight:600}}>Not Going</div></div>
+      <div style={{padding:10,background:"#F0EAE0",borderRadius:10,textAlign:"center",border:"1px solid #D4C5AA"}}><div style={{fontSize:22,fontWeight:800,color:"#8B7355"}}>{noResp}</div><div style={{fontSize:10,color:"#8B7355",fontWeight:600}}>No Response</div></div>
+      <div style={{padding:10,background:"#F0E8FF",borderRadius:10,textAlign:"center",border:"1px solid #D4C5E8"}}><div style={{fontSize:22,fontWeight:800,color:"#6B4C8A"}}>{totalGuests}</div><div style={{fontSize:10,color:"#6B4C8A",fontWeight:600}}>Guests</div></div>
     </div>
 
     {/* Member list by branch */}
@@ -627,24 +679,43 @@ function AttendancePage({members,rootChildren,updateMember}){
       {rootChildren.map(rc=>{
         const branchMembers = [rc,...getAllBranch(rc.id,members)].filter(m=>!m.isDeceased);
         if(branchMembers.length===0) return null;
+        const branchGuests = branchMembers.reduce((a,m)=>a+(guests[m.id]||[]).length,0);
         return (<div key={rc.id} style={{background:"#fff",borderRadius:12,border:"1px solid #C8DFB0",overflow:"hidden"}}>
           <div style={{padding:"8px 14px",background:"#F5FAEF",fontSize:13,fontWeight:700,color:"#2D5016",borderBottom:"1px solid #D4DFC8"}}>
             {rc.name.split(/[\s(]/)[0]}'s Family
-            <span style={{fontWeight:400,color:"#7A6B5A",marginLeft:8}}>({branchMembers.filter(m=>rsvps[m.id]==="going").length} of {branchMembers.length} going)</span>
+            <span style={{fontWeight:400,color:"#7A6B5A",marginLeft:8}}>({branchMembers.filter(m=>rsvps[m.id]==="going").length} going{branchGuests>0?` + ${branchGuests} guest${branchGuests===1?"":"s"}` :""})</span>
           </div>
           {branchMembers.map((m,mi)=>{
             const status = rsvps[m.id]||"";
-            return (<div key={m.id} style={{padding:"8px 14px",borderBottom:mi<branchMembers.length-1?"1px solid #F0EAE0":"none",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6,background:mi%2===0?"#fff":"#FDFCF9"}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:150}}>
-                <span style={{fontSize:13,fontWeight:m.isRootChild?600:400,color:"#3B2F1E"}}>{m.name}</span>
-                {m.age&&<span style={{fontSize:11,color:"#9A8B7A"}}>({m.age})</span>}
-                {m.city&&m.state&&<span style={{fontSize:11,color:"#9A8B7A"}}>{m.city}, {m.state}</span>}
+            const memberGuests = guests[m.id]||[];
+            const isAdding = addingFor===m.id;
+            return (<div key={m.id} style={{borderBottom:mi<branchMembers.length-1?"1px solid #F0EAE0":"none",background:mi%2===0?"#fff":"#FDFCF9"}}>
+              <div style={{padding:"8px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:150,flexWrap:"wrap"}}>
+                  <span style={{fontSize:13,fontWeight:m.isRootChild?600:400,color:"#3B2F1E"}}>{m.name}</span>
+                  {m.age&&<span style={{fontSize:11,color:"#9A8B7A"}}>(age {m.age})</span>}
+                  {m.spouse&&<span style={{fontSize:11,color:"#8B7355"}}>⚭ {m.spouse}{m.spouseAge?` (${m.spouseAge})`:""}</span>}
+                </div>
+                <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
+                  <button onClick={()=>saveRsvp(m.id,"going")} style={{...statusStyle("going"),outline:status==="going"?"2px solid #2D5016":"none"}}>✓ Going</button>
+                  <button onClick={()=>saveRsvp(m.id,"maybe")} style={{...statusStyle("maybe"),outline:status==="maybe"?"2px solid #C4963A":"none"}}>? Maybe</button>
+                  <button onClick={()=>saveRsvp(m.id,"not-going")} style={{...statusStyle("not-going"),outline:status==="not-going"?"2px solid #933":"none"}}>✕ No</button>
+                  <button onClick={()=>setAddingFor(isAdding?null:m.id)} style={{padding:"4px 8px",borderRadius:12,fontSize:11,fontWeight:600,cursor:"pointer",border:"1px solid #D4C5E8",background:isAdding?"#6B4C8A":"#F0E8FF",color:isAdding?"#fff":"#6B4C8A"}}>+ Guest</button>
+                </div>
               </div>
-              <div style={{display:"flex",gap:4}}>
-                <button onClick={()=>saveRsvp(m.id,"going")} style={{...statusStyle("going"),outline:status==="going"?"2px solid #2D5016":"none"}}>✓ Going</button>
-                <button onClick={()=>saveRsvp(m.id,"maybe")} style={{...statusStyle("maybe"),outline:status==="maybe"?"2px solid #C4963A":"none"}}>? Maybe</button>
-                <button onClick={()=>saveRsvp(m.id,"not-going")} style={{...statusStyle("not-going"),outline:status==="not-going"?"2px solid #933":"none"}}>✕ No</button>
-              </div>
+              {/* Guest list for this member */}
+              {memberGuests.length>0&&(<div style={{padding:"4px 14px 8px 30px"}}>
+                {memberGuests.map((g,gi)=>(<div key={gi} style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"#6B4C8A",marginBottom:2}}>
+                  <span>👤 {g.name}{g.age?` (age ${g.age})`:""}</span>
+                  <button onClick={()=>removeGuest(m.id,gi)} style={{background:"none",border:"none",color:"#C77",cursor:"pointer",fontSize:11}}>✕</button>
+                </div>))}
+              </div>)}
+              {/* Add guest form */}
+              {isAdding&&(<div style={{padding:"6px 14px 10px 30px",display:"flex",gap:6,flexWrap:"wrap"}}>
+                <input placeholder="Guest name" value={guestForm.name} onChange={e=>setGuestForm(p=>({...p,name:e.target.value}))} style={{...is,flex:2,minWidth:120}}/>
+                <input placeholder="Age" type="number" value={guestForm.age} onChange={e=>setGuestForm(p=>({...p,age:e.target.value}))} style={{...is,flex:1,minWidth:60}}/>
+                <button onClick={()=>addGuest(m.id)} style={{padding:"8px 14px",background:"#6B4C8A",color:"#fff",border:"none",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600,whiteSpace:"nowrap"}}>Add Guest</button>
+              </div>)}
             </div>);
           })}
         </div>);
