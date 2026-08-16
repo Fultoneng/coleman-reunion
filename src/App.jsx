@@ -43,14 +43,59 @@ function buildParentOpts(ms){return ms.filter(m=>m.isRootChild).map(r=>({root:r,
 function getDepth(m,ms){let d=0;let c=m;const v=new Set();while(c&&!c.isRootChild&&!v.has(c.id)){v.add(c.id);d++;c=ms.find(x=>x.id===c.parentId);}return d;}
 function HaloSVG({size=16}){return (<svg width={size} height={size*0.65} viewBox="0 0 24 15" style={{display:"inline-block",verticalAlign:"middle"}}><ellipse cx="12" cy="9" rx="9" ry="4" fill="none" stroke="#D4A843" strokeWidth="2.2" opacity="0.85"/><ellipse cx="12" cy="9" rx="9" ry="4" fill="none" stroke="#F5E6B8" strokeWidth="1" opacity="0.5"/></svg>);}
 
+/* ═══ FAMILY PASSKEY — change this to update the passkey ═══ */
+const FAMILY_PASSKEY = "Aurthur_OrmaRee_13";
+
 /* ═══ MAIN APP ═══ */
 export default function ColemanReunion(){
+  const[authed,setAuthed]=useState(false);
+  const[authChecked,setAuthChecked]=useState(false);
+  const[passInput,setPassInput]=useState("");
+  const[passError,setPassError]=useState(false);
   const[members,setMembers]=useState(INITIAL_MEMBERS);
   const[page,setPage]=useState("tree");
   const[editTargetId,setEditTargetId]=useState(null);
   const[loaded,setLoaded]=useState(false);
   const[saveMsg,setSaveMsg]=useState("");
   const[showHelp,setShowHelp]=useState(false);
+
+  // Check if already authenticated
+  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-auth");if(r?.value===FAMILY_PASSKEY)setAuthed(true);}catch{}setAuthChecked(true);})();},[]);
+
+  const handleLogin=async()=>{
+    if(passInput.trim()===FAMILY_PASSKEY){
+      setAuthed(true);setPassError(false);
+      try{await window.storage.set("coleman-auth",FAMILY_PASSKEY);}catch{}
+    }else{setPassError(true);}
+  };
+
+  const handleKeyDown=(e)=>{if(e.key==="Enter")handleLogin();};
+
+  // Lock screen
+  if(!authChecked)return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"Georgia,serif",color:"#3B2F1E",background:"#FAF7F2"}}>Loading…</div>;
+
+  if(!authed)return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(180deg,#2D5016 0%,#1B3A0E 40%,#0F2508 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{maxWidth:420,width:"100%",textAlign:"center"}}>
+        <div style={{fontSize:80,marginBottom:10,filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.3))"}}>🌳</div>
+        <h1 style={{fontFamily:"Georgia,serif",color:"#fff",fontSize:"clamp(24px,5vw,36px)",margin:"0 0 6px",fontWeight:700,textShadow:"0 2px 8px rgba(0,0,0,0.3)"}}>The Coleman Family Reunion</h1>
+        <p style={{color:"rgba(255,255,255,0.7)",fontSize:14,fontStyle:"italic",margin:"0 0 30px"}}>Rooted in Indianapolis — Founded by Aurthur Coleman & Orma Ree</p>
+        <div style={{background:"rgba(255,255,255,0.1)",backdropFilter:"blur(10px)",borderRadius:16,padding:28,border:"1px solid rgba(255,255,255,0.15)"}}>
+          <div style={{fontSize:15,color:"#fff",fontWeight:600,marginBottom:4}}>Family Access</div>
+          <p style={{fontSize:13,color:"rgba(255,255,255,0.6)",margin:"0 0 16px"}}>Enter the family passkey to continue</p>
+          <input type="password" value={passInput} onChange={e=>{setPassInput(e.target.value);setPassError(false);}} onKeyDown={handleKeyDown}
+            placeholder="Enter passkey"
+            style={{width:"100%",padding:"14px 18px",border:passError?"2px solid #E85555":"2px solid rgba(255,255,255,0.2)",borderRadius:10,fontSize:16,background:"rgba(255,255,255,0.08)",color:"#fff",boxSizing:"border-box",outline:"none",textAlign:"center",letterSpacing:2}}/>
+          {passError&&<div style={{color:"#FF8A8A",fontSize:13,marginTop:8,fontWeight:500}}>Incorrect passkey. Please try again or contact a family member.</div>}
+          <button onClick={handleLogin}
+            style={{marginTop:14,padding:"14px 32px",background:"linear-gradient(135deg,#4A7A28,#6AAF3D)",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontSize:15,fontWeight:700,width:"100%",boxShadow:"0 4px 12px rgba(74,122,40,0.4)"}}>
+            Enter
+          </button>
+        </div>
+        <p style={{color:"rgba(255,255,255,0.35)",fontSize:11,marginTop:20}}>This site is for Coleman family members only.</p>
+      </div>
+    </div>
+  );
 
   useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-v8");if(r?.value){const p=JSON.parse(r.value);if(Array.isArray(p)&&p.length>0)setMembers(p);}}catch{}setLoaded(true);})();},[]);
   const saveData=useCallback(async(data)=>{try{await window.storage.set("coleman-v8",JSON.stringify(data));setSaveMsg("Saved");setTimeout(()=>setSaveMsg(""),1500);}catch{}},[]);
