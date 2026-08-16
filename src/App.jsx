@@ -244,67 +244,184 @@ function MapPage({members}){const lv=members.filter(m=>!m.isDeceased);const sc={
 
 /* ═══ BY-LAWS ═══ */
 function ByLawsPage({rootChildren}){
-  return (<div style={{maxWidth:740,margin:"0 auto"}}>
-    <h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Coleman Family Reunion By-Laws</h2>
+  const S=({n,t,children})=>(<div style={{marginBottom:24}}><h3 style={{fontFamily:"Georgia,serif",color:"#2D5016",fontSize:15,margin:"0 0 8px",borderBottom:"1px solid #D4DFC8",paddingBottom:6}}>{n}. {t}</h3>{children}</div>);
+  const P=({children})=>(<p style={{fontSize:14,color:"#3B2F1E",lineHeight:1.7,margin:"0 0 8px"}}>{children}</p>);
+  const UL=({items})=>(<ul style={{margin:"6px 0 10px 20px",fontSize:14,color:"#3B2F1E",lineHeight:1.7}}>{items.map((it,i)=>(<li key={i} style={{marginBottom:3}}>{it}</li>))}</ul>);
+
+  return (<div style={{maxWidth:760,margin:"0 auto"}}>
+    <h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Preliminary Guidelines for the Coleman Family Reunion</h2>
     <div style={{background:"#FFF8EC",borderRadius:10,padding:14,border:"1px solid #E8DFD0",marginBottom:20,fontSize:13,color:"#8B7355",lineHeight:1.5}}>
-      <strong style={{color:"#C4963A"}}>📋 Preliminary Draft</strong> — This document will be presented, voted on, and amended during the first official family business meeting. All items are open for discussion and change.
+      <strong style={{color:"#C4963A"}}>📋 Draft — August 15, 2026</strong> — Prepared by Michael Fulton. These guidelines are a starting point for discussion and family approval. They are intended to provide consistency, fairness, and transparency in planning future Coleman Family Reunions. The guidelines may be amended by family vote as needed.
     </div>
-    <div style={{background:"#fff",borderRadius:14,padding:24,border:"1px solid #C8DFB0",fontSize:14,color:"#3B2F1E",lineHeight:1.7}}>
-      <p style={{textAlign:"center",color:"#9A8B7A",fontStyle:"italic",margin:"20px 0"}}>The full by-laws document will be posted here soon. The family will review, discuss, and vote on these at the first business meeting.</p>
-      <p style={{textAlign:"center",color:"#7A6B5A",fontSize:13}}>Key topics that will be covered:</p>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:8,margin:"16px 0"}}>
-        {["Name & Purpose","Membership Definition","Reunion Schedule","Hosting Rotation","Finances & Dues","Officers & Committees","Business Meeting Rules","Amendments Process"].map(t=>(<div key={t} style={{padding:"10px 14px",background:"#F5FAEF",borderRadius:8,border:"1px solid #D4DFC8",fontSize:13,color:"#2D5016",fontWeight:500}}>📌 {t}</div>))}
-      </div>
+    <div style={{background:"#fff",borderRadius:14,padding:24,border:"1px solid #C8DFB0"}}>
+      <S n="1" t="Reunion Schedule"><P>The Coleman Family Reunion shall be held biennially, during odd-numbered years.</P></S>
 
-      <div style={{marginTop:24,borderTop:"1px solid #E8DFD0",paddingTop:16}}>
-        <div style={{fontSize:15,fontWeight:700,color:"#2D5016",marginBottom:8}}>Key Definitions (Preview)</div>
-        <p style={{margin:"0 0 8px"}}><strong>Family:</strong> A family is defined as all members (descendants, spouses, and children) of one of the 13 root siblings. Each root sibling's line represents one family branch.</p>
-        <p style={{margin:"0 0 8px"}}><strong>Hosting Rotation:</strong> Each family branch will take a turn planning and hosting a reunion weekend. This can be changed during the family meeting, but this is to start off with.</p>
-      </div>
+      <S n="2" t="Reunion Weekend"><P>The Reunion shall normally be held on the first full weekend of August.</P></S>
 
-      <div style={{marginTop:16,borderTop:"1px solid #E8DFD0",paddingTop:16}}>
-        <div style={{fontSize:15,fontWeight:700,color:"#2D5016",marginBottom:8}}>Family Hosting Rotation (Draft)</div>
-        <p style={{margin:"0 0 10px",fontSize:13,color:"#7A6B5A"}}>This can be changed during the family meeting, but this is to start off with. Each family gets a weekend to host.</p>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:4}}>
-          {rootChildren.map((c,i)=>(<div key={c.id} style={{fontSize:13,padding:"6px 10px",display:"flex",gap:8,alignItems:"center",background:i%2===0?"#F5FAEF":"#fff",borderRadius:6}}><span style={{fontWeight:700,color:"#2D5016",minWidth:50}}>Year {i+1}</span><span style={{color:c.isDeceased?"#8B7355":"#1B3A0E"}}>{c.name.split(/[\s(]/)[0]}'s Family</span>{c.isDeceased&&<HaloSVG size={11}/>}</div>))}
-        </div>
-      </div>
+      <S n="3" t="Reunion Location"><P>The Reunion will rotate among designated host cities, including Akron, Ohio, and other approved family locations.</P><P>A Reunion may be held in another city on an ad hoc basis with approval of the family through the established voting process.</P></S>
 
-      <div style={{marginTop:16,borderTop:"1px solid #E8DFD0",paddingTop:16}}>
-        <div style={{fontSize:15,fontWeight:700,color:"#2D5016",marginBottom:8}}>Potential Host Cities</div>
-        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>{REUNION_CITIES.map(c=>(<span key={c} style={{padding:"5px 12px",background:"#E8F3DC",borderRadius:6,fontSize:13,fontWeight:500,color:"#2D5016",border:"1px solid #B8D4A0"}}>{c}{c.startsWith("Indianapolis")?" ★":""}</span>))}</div>
-      </div>
+      <S n="4" t="Family Voting"><P>Major decisions concerning the Reunion shall be decided through a family vote.</P><P>For voting purposes, each family branch shall receive one vote, regardless of:</P><UL items={["the number of people in that branch;","the number of people attending the Reunion;","the amount of money contributed by the branch; or","the number of individual households within that branch."]} /><P>The purpose of this structure is to ensure that larger family branches do not have more decision-making authority simply because they have more members.</P><P>The family should seek discussion and consensus whenever possible before a formal vote is taken.</P></S>
+
+      <S n="5" t="Financial Responsibility Is Based on Individuals"><P>Although each family branch receives one vote, Reunion costs are different.</P><P>Reunion expenses will be calculated based on the individual family members and guests attending the Reunion. Each person's applicable Reunion fee will be determined by his or her age category and the final cost structure approved for that Reunion.</P><P>Households may submit one combined payment for everyone in their household; however, the underlying Reunion cost is calculated based upon the individuals attending.</P><div style={{background:"#F5FAEF",borderRadius:8,padding:12,border:"1px solid #D4DFC8",margin:"10px 0"}}><P><strong>Voting = One Vote Per Family Branch</strong></P><P><strong>Financial Responsibility = Based on Each Individual Attending</strong></P></div><P>This distinction is intended to provide equal family representation while fairly distributing the actual cost of the Reunion.</P></S>
+
+      <S n="6" t="Host Family"><P>Each Reunion shall have a designated Host Family. The Host Family has primary responsibility for organizing and coordinating the Reunion and shall provide overall direction for the event.</P><P>The Host Family's responsibilities may include:</P><UL items={["selecting and coordinating Reunion venues;","developing the Reunion schedule;","arranging meals and catering;","coordinating hotel accommodations;","planning activities;","communicating with family members;","maintaining the Reunion budget;","collecting Reunion payments;","coordinating souvenirs;","conducting the Business Meeting; and","overseeing the Event Support families."]} /><P>The Host Family is responsible for planning and organizing the Reunion, but it is not expected to perform every operational task by itself.</P></S>
+
+      <S n="7" t="Event Support Roles"><P>In addition to the Host Family, designated families will serve in Event Support Roles. These families work under the overall plan established by the Host Family and are responsible for helping execute specific Reunion activities.</P>
+        <div style={{background:"#F5FAEF",borderRadius:8,padding:14,border:"1px solid #D4DFC8",margin:"10px 0"}}><div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:6}}>Logistics Support</div><P>The Logistics Support Family assists with obtaining and transporting the physical items required for Reunion activities. Responsibilities may include:</P><UL items={["picking up tables and chairs;","picking up food or catering orders;","transporting supplies;","obtaining ice, beverages, decorations, or other requested items;","coordinating equipment pickup and return; and","assisting with movement of Reunion materials between locations."]} /><P>The Host Family determines what is needed and how the event will be set up. Logistics Support helps make sure those items arrive where and when they are needed.</P></div>
+        <div style={{background:"#F5FAEF",borderRadius:8,padding:14,border:"1px solid #D4DFC8",margin:"10px 0"}}><div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:6}}>Operations Support</div><P>The Operations Support Family assists with the physical operation and closing of Reunion activities. Responsibilities may include:</P><UL items={["assisting during events;","maintaining common areas;","organizing trash and recycling;","helping with cleanup;","returning areas to their original condition;","assisting with breakdown of tables, chairs, and equipment; and","ensuring rented or borrowed items are ready for return."]} /><P>The Host Family remains responsible for directing the event, including food presentation and event setup. Event Support families provide the additional hands necessary to make the Reunion operate efficiently.</P></div>
+        <P>Additional Event Support roles may be created when necessary.</P></S>
+
+      <S n="8" t="Host and Support Rotation"><P>Hosting and Event Support responsibilities shall rotate among the eligible family branches.</P><P>The goal of the rotation is that a family serving as either the Host Family or in a designated Event Support role will normally be called upon approximately once every eight (8) years.</P><P>The rotation is intended to:</P><UL items={["distribute Reunion responsibilities fairly;","prevent the same families from doing the majority of the work;","give each branch an opportunity to contribute;","create continuity between Reunions; and","allow families several years between major Reunion responsibilities."]} /><P>The rotation schedule should be maintained and communicated to the family so families know in advance when they are expected to serve.</P></S>
+
+      <S n="9" t="Reunion Weekend Schedule"><P>The Reunion shall normally begin Friday evening and end at approximately Noon on Sunday. Activities shall normally include:</P>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:8,margin:"10px 0"}}><div style={{background:"#F5FAEF",borderRadius:8,padding:10,border:"1px solid #D4DFC8"}}><div style={{fontWeight:700,color:"#2D5016",fontSize:13}}>Friday</div><div style={{fontSize:13}}>Evening get-together</div></div><div style={{background:"#F5FAEF",borderRadius:8,padding:10,border:"1px solid #D4DFC8"}}><div style={{fontWeight:700,color:"#2D5016",fontSize:13}}>Saturday</div><div style={{fontSize:13}}>Family picnic & evening activity</div></div><div style={{background:"#F5FAEF",borderRadius:8,padding:10,border:"1px solid #D4DFC8"}}><div style={{fontWeight:700,color:"#2D5016",fontSize:13}}>Sunday</div><div style={{fontSize:13}}>Family breakfast & Business Meeting</div></div></div>
+        <P>Unless specifically included in the approved Reunion budget, optional activities requiring an additional fee shall be paid directly by the individuals choosing to participate. The Business Meeting shall be limited to family members.</P></S>
+
+      <S n="10" t="Activities for All Ages"><P>The Reunion shall include reasonable activities and opportunities for participation by family members of all ages.</P></S>
+
+      <S n="11" t="Hotel Accommodations"><P>The Host Family shall attempt to arrange group accommodations or a hotel room block for family members attending the Reunion.</P><P>Individual family members are responsible for paying their own hotel expenses.</P><div style={{background:"#FFF8EC",borderRadius:8,padding:14,border:"2px solid #C4963A",margin:"10px 0",textAlign:"center"}}><span style={{fontSize:17,fontWeight:700,color:"#B8860B",textDecoration:"underline"}}>Hotel expenses are not included in the standard Reunion fee.</span><p style={{fontSize:14,color:"#3B2F1E",margin:"8px 0 0",lineHeight:1.5}}>Each attending family/household is responsible for booking and paying for their own hotel accommodations separately.</p></div></S>
+
+      <S n="12" t="Initial Reunion Notification"><P>No later than January 1 of the Reunion year, the Host Family shall provide family members with:</P><UL items={["Reunion dates;","Reunion city;","preliminary schedule, when available;","estimated full-price Reunion cost per person, excluding lodging;","RSVP instructions;","payment information; and","contact information for the person designated to confidentially assist with hardship situations."]} /></S>
+
+      <S n="13" t="RSVP Deadline"><P>To allow adequate planning, all participating households should RSVP no later than February 1 of the Reunion year. The RSVP should include:</P><UL items={["names of everyone attending;","ages or applicable age categories;","guests;","applicable dietary or accessibility information; and","confidential notification of any financial hardship."]} /></S>
+
+      <S n="14" t="Updated Cost Estimate"><P>No later than March 1, the Host Family shall provide an updated estimated Reunion price based upon:</P><UL items={["final or projected attendance;","age distribution of attendees;","expected food expenses;","facility costs;","souvenirs;","activities;","Event Support needs;","hardship assistance; and","other approved Reunion expenses."]} /></S>
+
+      <S n="15" t="Reunion Payment Schedule"><P>The Reunion payment may be divided into installments to reduce the financial burden on families and to ensure the Host Family has sufficient funds to make required deposits and reservations.</P><P>At a minimum: 50% of each participant's applicable Reunion fee shall be due by April 1. The remaining balance and final payment deadline shall be communicated by the Host Family after final costs and attendance are determined.</P><P>Families may pay earlier or pay the full amount at one time if they choose.</P></S>
+
+      <S n="16" t="Why Reunion Fees May Vary"><P>There will not necessarily be one identical Reunion price for every attendee. The Reunion fee will vary because different age groups have different expected costs and financial circumstances.</P>
+        <div style={{overflowX:"auto",margin:"10px 0"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}><thead><tr style={{background:"#F5FAEF"}}><th style={{padding:"8px 12px",textAlign:"left",borderBottom:"2px solid #C8DFB0"}}>Age</th><th style={{padding:"8px 12px",textAlign:"left",borderBottom:"2px solid #C8DFB0"}}>Pricing Category</th></tr></thead><tbody><tr><td style={{padding:"6px 12px",borderBottom:"1px solid #F0EAE0"}}>0–12</td><td style={{padding:"6px 12px",borderBottom:"1px solid #F0EAE0"}}>Reduced Child Rate</td></tr><tr style={{background:"#FDFCF9"}}><td style={{padding:"6px 12px",borderBottom:"1px solid #F0EAE0"}}>13–26</td><td style={{padding:"6px 12px",borderBottom:"1px solid #F0EAE0"}}>Reduced Youth/Young Adult Rate</td></tr><tr><td style={{padding:"6px 12px",borderBottom:"1px solid #F0EAE0"}}>27–74</td><td style={{padding:"6px 12px",borderBottom:"1px solid #F0EAE0"}}>Full Adult Rate</td></tr><tr style={{background:"#FDFCF9"}}><td style={{padding:"6px 12px",borderBottom:"1px solid #F0EAE0"}}>75+</td><td style={{padding:"6px 12px",borderBottom:"1px solid #F0EAE0"}}>Reduced Senior Rate</td></tr></tbody></table></div>
+        <P>The actual dollar amount for each category will be established for each Reunion after attendance and expected expenses are known. The percentage assigned to each age group may change from one Reunion to another because the makeup of the people attending directly affects the amount each participant must pay.</P><P>The Reunion website shall display the approved rates and calculate the amount owed based upon the members and guests registered by each household.</P></S>
+
+      <S n="17" t="Reunion Expense Calculation"><P>The Host Family shall first estimate the total cost of conducting the Reunion. Eligible Reunion Expenses may include:</P><UL items={["Friday evening function;","Saturday picnic;","Saturday evening function;","Sunday breakfast;","food and non-alcoholic beverages;","facility rentals;","tables and chairs;","Reunion souvenirs;","hospitality-room refreshments, if applicable;","Reunion communications;","official family photographs;","Reunion website or administrative expenses approved by the family; and","other expenses necessary to conduct the Reunion."]} /><P>The total estimated Reunion cost will then be distributed across expected participants using the approved age-based pricing structure. Because participation changes from Reunion to Reunion, the exact Reunion fee cannot be permanently fixed in these guidelines.</P></S>
+
+      <S n="18" t="Hardship Assistance"><P>Participation in the Coleman Family Reunion should not be prevented solely because of financial hardship.</P><P>Family members experiencing hardship should confidentially contact the designated hardship representative no later than February 1. Hardship information shall remain confidential and does not need to be disclosed to the broader family.</P><P>As part of Reunion budgeting, approximately 10% may be added to the estimated Reunion cost to provide a Hardship Assistance Reserve. This allows the Reunion to absorb some or all of the cost for family members who would otherwise be unable to participate.</P><P>Individuals receiving hardship assistance may contribute whatever amount they are reasonably able to contribute. Additional voluntary family contributions may also be accepted to support hardship participation.</P></S>
+
+      <S n="19" t="Guests"><P>Guests of family members are welcome when permitted by the Reunion activities. Guests shall be included in the Reunion cost calculation based upon the guest's applicable age category. The family member or household registering the guest is responsible for the guest's Reunion fee.</P><P>The Reunion website shall allow family members to add guests and provide the guest's age category so the appropriate fee can be calculated.</P></S>
+
+      <S n="20" t="Reunion Souvenir"><P>A Reunion souvenir should be provided to attending family members when financially practical. The souvenir does not need to be expensive. The objective is to provide a meaningful, reusable reminder of the Reunion while remaining financially responsible. The cost of the official Reunion souvenir shall be included in Reunion Expenses.</P></S>
+
+      <S n="21" t="Family Photographs"><P>When practical, the Reunion shall include:</P><UL items={["an Official Family Photograph consisting of blood relatives and lawful family members; and","a Reunion Group Photograph including all Reunion attendees."]} /><P>These photographs are intended to document the continuing history of the Coleman Family Reunion.</P></S>
+
+      <S n="22" t="Reunion Financial Reporting"><P>The Host Family shall maintain reasonable records of Reunion income and expenses. A summary of Reunion expenses shall be presented to the family during the Business Meeting.</P><P>The purpose of the report is transparency and accountability rather than requiring the Host Family to provide a formal audited financial statement. The report should include, at minimum:</P><UL items={["total Reunion money collected;","total Reunion expenses;","hardship assistance provided in aggregate, without identifying recipients;","additional contributions received; and","remaining Reunion funds."]} /></S>
+
+      <S n="23" t="Remaining Reunion Funds"><P>After all Reunion expenses have been paid and final costs are known, any remaining Reunion funds shall be returned to participating families.</P><P>Any refund shall be distributed using an equitable method based upon the Reunion fees actually paid rather than the family's voting structure.</P><P>Alternatively, the family may vote at the Business Meeting to carry some or all remaining funds forward as seed money for the next Reunion.</P></S>
+
+      <S n="24" t="Business Meeting"><P>The Reunion Business Meeting should include:</P><UL items={["Reunion financial report from the Host Family;","discussion and vote on any proposed changes to the Coleman Family Reunion Guidelines;","confirmation of the location and dates of the next Reunion;","confirmation of the next Host Family and Event Support families;","review of the Host and Event Support rotation schedule;","family website update;","Reunion sponsorships, voluntary contributions, and other financial matters;","proposals for future Reunion activities; and","any other family business requiring discussion or vote."]} /></S>
+
+      <S n="25" t="Guiding Principle"><P>The purpose of these guidelines is not to make the Reunion overly formal.</P><P>They are intended to ensure that: every family branch has an equal voice, every attendee contributes fairly based upon the approved structure, families experiencing hardship can still participate, and the work required to conduct the Reunion is shared across the family.</P><P style={{fontWeight:600,color:"#2D5016",fontStyle:"italic"}}>The ultimate goal is to maintain and strengthen the Coleman Family Reunion for future generations.</P></S>
     </div>
   </div>);
 }
 
-/* ═══ REUNION PLANNER (no charts) ═══ */
+/* ═══ REUNION PLANNER — role assignment + first reunion vote ═══ */
 function ReunionPage(){
-  const bl={bestMonths:["",""],preferredDays:"",holidayWeekend:"",travelMode:"",cityRankings:[]};
-  const[prefs,setPrefs]=useState(bl);const[submitted,setSubmitted]=useState(false);const[responses,setResponses]=useState([]);
-  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-reunion-r2");if(r?.value)setResponses(JSON.parse(r.value));}catch{}})();},[]);
-  const set=(k,v)=>setPrefs(p=>({...p,[k]:v}));const setMo=(i,v)=>{const n=[...prefs.bestMonths];n[i]=v;set("bestMonths",n);};
-  const togC=city=>{const c=[...prefs.cityRankings];const i=c.indexOf(city);if(i>=0)c.splice(i,1);else c.push(city);set("cityRankings",c);};
-  const gR=city=>{const i=prefs.cityRankings.indexOf(city);return i>=0?i+1:null;};
-  const sub=async()=>{if(!prefs.bestMonths[0]||!prefs.bestMonths[1])return alert("Select your top 2 months.");if(!prefs.preferredDays||!prefs.travelMode)return alert("Answer all questions.");if(prefs.cityRankings.length<REUNION_CITIES.length)return alert("Rank all "+REUNION_CITIES.length+" cities.");const n=[...responses,{...prefs,ts:Date.now()}];setResponses(n);try{await window.storage.set("coleman-reunion-r2",JSON.stringify(n));}catch{}setSubmitted(true);};
-  const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};const ls={display:"block",fontSize:13,fontWeight:600,color:"#2D5016",marginBottom:5,marginTop:18,lineHeight:1.4};
-  return (<div style={{maxWidth:640,margin:"0 auto"}}>
+  const[roles,setRoles]=useState({});const[votes,setVotes]=useState({});const[saved,setSaved]=useState(false);
+  useEffect(()=>{(async()=>{try{const r=await window.storage.get("coleman-roles-v2");if(r?.value)setRoles(JSON.parse(r.value));}catch{} try{const r2=await window.storage.get("coleman-first-vote");if(r2?.value)setVotes(JSON.parse(r2.value));}catch{}})();},[]);
+  const saveRoles=async(d)=>{setRoles(d);try{await window.storage.set("coleman-roles-v2",JSON.stringify(d));setSaved(true);setTimeout(()=>setSaved(false),2000);}catch{}};
+  const saveVotes=async(d)=>{setVotes(d);try{await window.storage.set("coleman-first-vote",JSON.stringify(d));}catch{}};
+  const setRole=(id,val)=>{const n={...roles,[id]:val};saveRoles(n);};
+  const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};
+
+  const siblings=[
+    {id:"child-01",name:"Doris's Family",deceased:true},
+    {id:"child-02",name:"Samuel's Family",deceased:true},
+    {id:"child-03",name:"Luther's Family",deceased:true},
+    {id:"child-04",name:"Sammie's Family",deceased:false},
+    {id:"child-05",name:"Shirley's Family",deceased:false,locked:"Host — Akron, OH"},
+    {id:"child-06",name:"Paulette's Family",deceased:true},
+    {id:"child-07",name:"Norma's Family",deceased:true},
+    {id:"child-08",name:"Jackie's Family",deceased:false},
+    {id:"child-09",name:"Arlene's Family",deceased:false},
+    {id:"child-10",name:"Arthur Jr's Family",deceased:false},
+    {id:"child-11",name:"Charles's Family",deceased:false},
+    {id:"child-12",name:"Kevin's Family",deceased:false},
+    {id:"child-13",name:"Evan's Family",deceased:false},
+  ];
+
+  const supportCount = Object.values(roles).filter(r=>r==="operations"||r==="logistics").length;
+
+  return (<div style={{maxWidth:720,margin:"0 auto"}}>
     <h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Reunion Planner</h2>
-    <p style={{color:"#7A6B5A",fontSize:13,margin:"0 0 6px"}}>Help us find the best time and place for the family to come together.</p>
-    <div style={{background:"#FFF8EC",borderRadius:8,padding:10,border:"1px solid #E8DFD0",marginBottom:16,fontSize:12,color:"#8B7355",lineHeight:1.5}}>This can be changed during the family meeting, but this is to start off with. View results on the <strong>Reunion Tracker</strong> tab.</div>
-    {responses.length>0&&<div style={{background:"#E8F3DC",borderRadius:8,padding:8,border:"1px solid #B8D4A0",marginBottom:14,fontSize:13,color:"#2D5016",fontWeight:600,textAlign:"center"}}>{responses.length} response{responses.length===1?"":"s"} so far — check Reunion Tracker</div>}
-    {!submitted?(<div style={{background:"#fff",borderRadius:14,padding:20,border:"1px solid #C8DFB0"}}>
-      <label style={{...ls,marginTop:0}}>1st choice month for the reunion?</label><select style={is} value={prefs.bestMonths[0]} onChange={e=>setMo(0,e.target.value)}><option value="">Select…</option>{MONTHS.map(m=><option key={m}>{m}</option>)}</select>
-      <label style={ls}>2nd choice month?</label><select style={is} value={prefs.bestMonths[1]} onChange={e=>setMo(1,e.target.value)}><option value="">Select…</option>{MONTHS.map(m=><option key={m}>{m}</option>)}</select>
-      <label style={ls}>How many days?</label><select style={is} value={prefs.preferredDays} onChange={e=>set("preferredDays",e.target.value)}><option value="">Select…</option><option value="Thu-Sun">Thursday–Sunday (4 days)</option><option value="Fri-Sun">Friday–Sunday (weekend)</option></select>
-      <label style={ls}>Holiday weekend?</label><select style={is} value={prefs.holidayWeekend} onChange={e=>set("holidayWeekend",e.target.value)}><option value="">Select…</option><option value="yes">Yes — more time together</option><option value="no">No — regular weekend</option></select>
-      <label style={ls}>How would you travel?</label><select style={is} value={prefs.travelMode} onChange={e=>set("travelMode",e.target.value)}><option value="">Select…</option><option value="fly">Fly</option><option value="drive">Drive</option><option value="either">Either</option></select>
-      <label style={ls}>Rank the potential host cities (#1 = most preferred)</label><p style={{fontSize:12,color:"#7A6B5A",margin:"0 0 8px"}}>Tap in order of preference. Tap again to remove.</p>
-      <div style={{display:"flex",flexDirection:"column",gap:6}}>{REUNION_CITIES.map(city=>{const rank=gR(city);const isR=rank!==null;return <button key={city} onClick={()=>togC(city)} style={{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",borderRadius:10,border:isR?"2px solid #2D5016":"2px solid #E0D6C8",background:isR?"#E8F3DC":"#fff",cursor:"pointer",textAlign:"left"}}><div style={{width:30,height:30,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13,background:isR?"#2D5016":"#F0EAE0",color:isR?"#fff":"#B0A090",flexShrink:0}}>{isR?rank:"—"}</div><div style={{flex:1}}><div style={{fontSize:13,fontWeight:600,color:"#3B2F1E"}}>{city}</div><div style={{fontSize:11,color:"#8B7355"}}>{CITY_TAGS[city]}</div></div>{isR&&<div style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>#{rank}</div>}</button>;})}</div>
-      {prefs.cityRankings.length>0&&<button onClick={()=>set("cityRankings",[])} style={{marginTop:6,background:"none",border:"none",color:"#C4963A",cursor:"pointer",fontSize:12,fontWeight:600}}>Clear rankings</button>}
-      {prefs.cityRankings.length===REUNION_CITIES.length&&<div style={{marginTop:6,padding:6,background:"#E8F3DC",borderRadius:6,fontSize:12,color:"#2D5016",fontWeight:600,textAlign:"center"}}>All ranked!</div>}
-      <button onClick={sub} style={{marginTop:20,padding:"14px",background:"linear-gradient(135deg,#2D5016,#4A7A28)",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontSize:15,fontWeight:700,width:"100%"}}>Submit Preferences</button>
-    </div>):(<div style={{background:"#E8F3DC",borderRadius:14,padding:24,border:"1px solid #B8D4A0",textAlign:"center"}}><div style={{fontSize:36,marginBottom:8}}>🌳</div><div style={{fontSize:18,fontWeight:700,color:"#2D5016"}}>Submitted!</div><button onClick={()=>{setSubmitted(false);setPrefs(bl);}} style={{marginTop:12,padding:"10px 24px",background:"#2D5016",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:600}}>Submit for another member</button></div>)}
+
+    {/* First reunion announcement */}
+    <div style={{background:"linear-gradient(135deg,#2D5016,#4A7A28)",borderRadius:14,padding:20,color:"#fff",marginBottom:16}}>
+      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:"2px",opacity:.7,marginBottom:8}}>Restart of the Coleman Family Reunion</div>
+      <p style={{fontSize:15,lineHeight:1.6,margin:"0 0 10px"}}>As probably the biggest family branch, <strong>Shirley's Family</strong> will host the first Coleman Family Reunion in <strong>Northeast Ohio (Akron area)</strong>.</p>
+      <p style={{fontSize:14,lineHeight:1.6,margin:"0 0 10px",opacity:.9}}>We need the family to vote on two things to get started. Once we know the year, we will post estimated costs. We will do our best to adhere to the guidelines on the By-Laws page.</p>
+      <p style={{fontSize:13,lineHeight:1.6,margin:0,opacity:.8}}>In order to execute this reunion, we need family branches to sign up for support roles. If your family is willing to help, please select a support role below. The remaining hosting rotation and future locations will be discussed and voted on at the first Business Meeting.</p>
+    </div>
+
+    {/* Voting section */}
+    <div style={{background:"#fff",borderRadius:14,padding:20,border:"1px solid #C8DFB0",marginBottom:16}}>
+      <div style={{fontSize:15,fontWeight:700,color:"#2D5016",marginBottom:12}}>🗳️ Family Vote — Help Us Decide</div>
+
+      <div style={{marginBottom:16}}>
+        <label style={{display:"block",fontSize:13,fontWeight:600,color:"#2D5016",marginBottom:6}}>What year should the first reunion be held?</label>
+        <div style={{display:"flex",gap:8}}>
+          {["2027","2028"].map(yr=>(<button key={yr} onClick={()=>saveVotes({...votes,year:yr})} style={{flex:1,padding:"14px",borderRadius:10,border:votes.year===yr?"2px solid #2D5016":"2px solid #E0D6C8",background:votes.year===yr?"#E8F3DC":"#fff",cursor:"pointer",fontSize:16,fontWeight:700,color:votes.year===yr?"#2D5016":"#7A6B5A"}}>{yr}</button>))}
+        </div>
+      </div>
+
+      <div>
+        <label style={{display:"block",fontSize:13,fontWeight:600,color:"#2D5016",marginBottom:6}}>Which weekend do you prefer?</label>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {[["last-july","Last full weekend in July"],["first-aug","First full weekend in August"]].map(([k,label])=>(<button key={k} onClick={()=>saveVotes({...votes,weekend:k})} style={{padding:"14px",borderRadius:10,border:votes.weekend===k?"2px solid #2D5016":"2px solid #E0D6C8",background:votes.weekend===k?"#E8F3DC":"#fff",cursor:"pointer",fontSize:14,fontWeight:600,color:votes.weekend===k?"#2D5016":"#7A6B5A",textAlign:"left"}}>{label}</button>))}
+        </div>
+      </div>
+    </div>
+
+    {/* Support role assignment */}
+    <div style={{background:"#fff",borderRadius:14,padding:20,border:"1px solid #C8DFB0"}}>
+      <div style={{fontSize:15,fontWeight:700,color:"#2D5016",marginBottom:4}}>Family Roles for the Reunion</div>
+      <p style={{fontSize:13,color:"#7A6B5A",margin:"0 0 6px",lineHeight:1.5}}>Each family branch can sign up for a role. Shirley's Family is locked in as the Host for the Akron reunion. We need at least one family for Operations Support and one for Logistics Support. Refer to the <strong>📜 By-Laws</strong> tab (Sections 6 & 7) for details on what each role involves.</p>
+      <p style={{fontSize:12,color:"#8B7355",margin:"0 0 14px"}}>The support families will stay with the Host Family unless voted to change at the Business Meeting.</p>
+
+      {supportCount < 2 && <div style={{background:"#FFF8EC",borderRadius:8,padding:10,border:"1px solid #E8DFD0",marginBottom:14,fontSize:13,color:"#C4963A",fontWeight:600}}>⚠️ We still need {2-supportCount} more support {2-supportCount===1?"family":"families"} to sign up to make this reunion happen.</div>}
+      {supportCount >= 2 && <div style={{background:"#E8F3DC",borderRadius:8,padding:10,border:"1px solid #B8D4A0",marginBottom:14,fontSize:13,color:"#2D5016",fontWeight:600}}>✓ Support roles are filled! Thank you to the families who stepped up.</div>}
+
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {siblings.map(sib=>{
+          const isLocked = sib.locked;
+          const currentRole = isLocked ? "host" : (roles[sib.id] || "");
+          return (<div key={sib.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,border:isLocked?"2px solid #C4963A":currentRole?"2px solid #2D5016":"1px solid #E0D6C8",background:isLocked?"#FFF8EC":currentRole?"#E8F3DC":"#fff"}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:14,fontWeight:600,color:sib.deceased?"#8B7355":"#1B3A0E",display:"flex",alignItems:"center",gap:4}}>
+                {sib.deceased&&<HaloSVG size={12}/>}{sib.name}
+              </div>
+              {isLocked && <div style={{fontSize:12,fontWeight:700,color:"#C4963A",marginTop:2}}>🏠 {sib.locked}</div>}
+            </div>
+            {isLocked ? (
+              <span style={{fontSize:12,fontWeight:600,color:"#C4963A",background:"#FFF3D6",padding:"4px 12px",borderRadius:6}}>Host (Locked)</span>
+            ) : (
+              <select value={currentRole} onChange={e=>setRole(sib.id,e.target.value)} style={{...is,width:"auto",minWidth:180,borderColor:currentRole?"#2D5016":"#C8DFB0"}}>
+                <option value="">No role selected</option>
+                <option value="operations">🔧 Operations Support</option>
+                <option value="logistics">🚛 Logistics Support</option>
+              </select>
+            )}
+          </div>);
+        })}
+      </div>
+      {saved&&<div style={{marginTop:10,textAlign:"center",fontSize:13,color:"#4A7A28",fontWeight:600}}>✓ Saved</div>}
+
+      {/* Future rotation note */}
+      <div style={{background:"#F5FAEF",borderRadius:12,padding:16,border:"1px solid #C8DFB0",marginTop:16}}>
+        <div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:6}}>📋 Looking Ahead — Building the Rotation</div>
+        <p style={{fontSize:13,color:"#3B2F1E",lineHeight:1.6,margin:"0 0 8px"}}>Per the By-Laws (Section 8), the goal is that each family branch serves as Host or in a Support role approximately once every 8 years. To make that work on a biennial schedule, we need at least <strong>4 Host City/Family commitments</strong> with corresponding Support families for each reunion.</p>
+        <p style={{fontSize:13,color:"#3B2F1E",lineHeight:1.6,margin:"0 0 8px"}}>This first reunion with Shirley's Family hosting in Akron is the starting point. At the Business Meeting, we will discuss and vote on the full rotation — identifying the next 3 Host Families and their preferred cities so every branch knows well in advance when their turn is coming.</p>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:6,marginTop:10}}>
+          {[["Reunion 1","Shirley's Family","Akron, OH ✓"],["Reunion 2","To be voted","TBD"],["Reunion 3","To be voted","TBD"],["Reunion 4","To be voted","TBD"]].map(([r,f,c])=>(
+            <div key={r} style={{padding:"8px 10px",background:r==="Reunion 1"?"#E8F3DC":"#fff",borderRadius:8,border:"1px solid #D4DFC8",textAlign:"center"}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#4A7A28"}}>{r}</div>
+              <div style={{fontSize:12,fontWeight:600,color:"#2D5016",marginTop:2}}>{f}</div>
+              <div style={{fontSize:11,color:"#7A6B5A"}}>{c}</div>
+            </div>
+          ))}
+        </div>
+        <p style={{fontSize:12,color:"#8B7355",marginTop:10,fontStyle:"italic",lineHeight:1.5}}>Each reunion also needs an Operations Support family and a Logistics Support family. With 4 host rotations and 2 support roles each, that's 12 family commitments spread across 8 years — ensuring responsibility is shared fairly across all branches.</p>
+      </div>
+    </div>
   </div>);
 }
 
