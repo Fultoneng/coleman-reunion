@@ -345,10 +345,20 @@ function ListView({members,rootChildren,goEdit}){
       {m.isDeceased&&<HaloSVG size={13}/>}
       <span style={{fontSize:13,fontWeight:depth===0?600:500,color:m.isDeceased?"#8B7355":"#1B3A0E",flex:1}}>{m.name}</span>
       {m.age&&<span style={{fontSize:11,color:"#9A8B7A"}}>({m.age})</span>}
-      {m.spouse&&<span style={{fontSize:11,color:"#8B7355"}}>⚭ {m.spouse}</span>}
+      {m.spouse&&<span style={{fontSize:11,color:"#8B7355"}}>⚭ {m.spouse}{m.spouseAge?` (${m.spouseAge})`:""}</span>}
       {m.state&&<span style={{fontSize:11,color:"#9A8B7A"}}>{m.city?`${m.city}, `:""}{m.state}</span>}
       {eBtn(m.id)}
     </div>
+    {/* Children under 18 */}
+    {(m.childrenUnder18||[]).length>0&&(<div style={{marginLeft:depth>0?16:0,paddingLeft:36}}>
+      {m.childrenUnder18.map((c,ci)=>(<div key={ci} style={{padding:"4px 12px",borderBottom:"1px solid #F5F0E5",background:"#FEFDFB",display:"flex",alignItems:"center",gap:6,fontSize:12}}>
+        {c.deceased&&<HaloSVG size={10}/>}
+        <span style={{color:"#6B5A4A",fontWeight:400}}>👶 {c.name}</span>
+        {c.age&&<span style={{fontSize:10,color:"#B0A090"}}>({c.age})</span>}
+        {c.birthMonth&&<span style={{fontSize:10,color:"#B0A090"}}>{c.birthMonth}</span>}
+        {c.deceased&&<span style={{fontSize:10,color:"#B0A090",fontStyle:"italic"}}>passed</span>}
+      </div>))}
+    </div>)}
     {isE&&kids.map(k=>renderM(k,depth+1))}
   </div>);};
 
@@ -374,7 +384,10 @@ function ListView({members,rootChildren,goEdit}){
             {/* Edit button — RIGHT side */}
             {eBtn(c.id)}
           </div>
-          {isE&&<div style={{borderTop:"1px dashed #C8DFB0"}}>{dk.length===0&&<div style={{fontSize:12,color:"#B0A090",fontStyle:"italic",padding:12}}>No family added yet</div>}{dk.map(k=>renderM(k,0))}</div>}
+          {isE&&<div style={{borderTop:"1px dashed #C8DFB0"}}>
+            {/* Root sibling's own children under 18 */}
+            {(c.childrenUnder18||[]).length>0&&(<div style={{paddingLeft:12}}>{c.childrenUnder18.map((ch,ci)=>(<div key={ci} style={{padding:"4px 12px",borderBottom:"1px solid #F5F0E5",background:"#FEFDFB",display:"flex",alignItems:"center",gap:6,fontSize:12}}>{ch.deceased&&<HaloSVG size={10}/>}<span style={{color:"#6B5A4A"}}>👶 {ch.name}</span>{ch.age&&<span style={{fontSize:10,color:"#B0A090"}}>({ch.age})</span>}{ch.birthMonth&&<span style={{fontSize:10,color:"#B0A090"}}>{ch.birthMonth}</span>}{ch.deceased&&<span style={{fontSize:10,color:"#B0A090",fontStyle:"italic"}}>passed</span>}</div>))}</div>)}
+            {dk.length===0&&(c.childrenUnder18||[]).length===0&&<div style={{fontSize:12,color:"#B0A090",fontStyle:"italic",padding:12}}>No family added yet</div>}{dk.map(k=>renderM(k,0))}</div>}
         </div>);})}
       </div>
     </div>
