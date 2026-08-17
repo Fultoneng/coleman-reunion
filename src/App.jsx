@@ -238,6 +238,15 @@ function AppContent(){
           <div><h1 style={{fontFamily:"Georgia,serif",fontSize:"clamp(18px,4vw,28px)",margin:0,fontWeight:700}}>The Coleman Family Reunion</h1><p style={{margin:"2px 0 10px",opacity:0.8,fontSize:13,fontStyle:"italic"}}>Rooted in Indianapolis — Founded by Aurthur Coleman & Orma Ree</p></div>
           <button onClick={()=>setShowHelp(!showHelp)} style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.4)",borderRadius:"50%",width:30,height:30,cursor:"pointer",fontSize:15,color:"#fff",fontWeight:700,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}} title="Help">?</button>
         </div>
+        {/* Welcome action banner */}
+        <div style={{background:"rgba(255,255,255,0.12)",borderRadius:8,padding:"10px 14px",marginBottom:8,border:"1px solid rgba(255,255,255,0.2)"}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:4}}>👋 Welcome! Here's what we need from you:</div>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap",fontSize:11,color:"rgba(255,255,255,0.85)"}}>
+            <span onClick={()=>setPage("form")} style={{cursor:"pointer",textDecoration:"underline"}}>① Add/update your family on the <strong>Members</strong> tab</span>
+            <span onClick={()=>setPage("reunion")} style={{cursor:"pointer",textDecoration:"underline"}}>② Vote for a year & weekend on the <strong>Planner</strong> tab</span>
+            <span onClick={()=>setPage("attend")} style={{cursor:"pointer",textDecoration:"underline"}}>③ RSVP on the <strong>Attendance</strong> tab</span>
+          </div>
+        </div>
         <div style={{display:"flex",gap:2,flexWrap:"wrap",position:"relative"}}>{tabs.map(([k,l])=>(
           <button key={k} onClick={()=>{setPage(k);if(k!=="form")setEditTargetId(null);}} style={{padding:"6px 10px",border:"none",borderRadius:"5px 5px 0 0",cursor:"pointer",fontSize:11,fontWeight:600,background:page===k?"#FAF7F2":"rgba(255,255,255,0.15)",color:page===k?"#2D5016":"rgba(255,255,255,0.9)"}}>{l}</button>
         ))}</div>
@@ -488,7 +497,47 @@ function FormPage({members,rootChildren,addMember,updateMember,deleteMember,edit
 }
 
 /* ═══ MAP ═══ */
-function MapPage({members}){const lv=members.filter(m=>!m.isDeceased);const sc={};const sr={};lv.forEach(m=>{if(!m.state)return;sc[m.state]=(sc[m.state]||0)+1;const b=m.parentRootId||m.id;if(b){if(!sr[m.state])sr[m.state]=new Set();sr[m.state].add(b);}});const mx=Math.max(1,...Object.values(sc));const gc=c=>c?`rgba(27,58,14,${.25+(c/mx)*.75})`:"#F0EAE0";const sw=Object.entries(sc).sort((a,b)=>b[1]-a[1]);return (<div><h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Where the Coleman Family Lives</h2><p style={{color:"#7A6B5A",fontSize:14,margin:"0 0 4px"}}>{lv.filter(m=>m.state).length} living members across {sw.length} states</p><p style={{color:"#9A8B7A",fontSize:12,margin:"0 0 20px",fontStyle:"italic"}}>Living members only.</p><div style={{overflowX:"auto",marginBottom:24}}><div style={{display:"grid",gridTemplateColumns:"repeat(12,minmax(36px,1fr))",gap:3,minWidth:440}}>{Array.from({length:96}).map((_,idx)=>{const r=Math.floor(idx/12),c=idx%12;const se=Object.entries(STATE_GRID).find(([_,p])=>p[0]===r&&p[1]===c);if(!se)return <div key={idx}/>;const[st]=se;const ct=sc[st]||0;return <div key={idx} title={`${STATE_NAMES[st]}: ${ct}`} style={{background:gc(ct),borderRadius:4,padding:"6px 2px",textAlign:"center",border:ct>0?"1px solid rgba(27,58,14,.3)":"1px solid #E0D6C8",minHeight:36,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><div style={{fontSize:11,fontWeight:700,color:ct>0?"#fff":"#B0A090"}}>{st}</div>{ct>0&&<div style={{fontSize:10,fontWeight:800,color:"#fff"}}>{ct}</div>}</div>;})}</div></div>{sw.length>0&&<div style={{background:"#fff",borderRadius:12,padding:16,border:"1px solid #C8DFB0"}}><div style={{fontSize:13,fontWeight:700,color:"#2D5016",marginBottom:10}}>Breakdown by State</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:8}}>{sw.map(([st,ct])=><div key={st} style={{display:"flex",justifyContent:"space-between",padding:"8px 12px",background:"#F5FAEF",borderRadius:6,border:"1px solid #D4DFC8"}}><span style={{fontSize:14,fontWeight:500}}>{STATE_NAMES[st]}</span><span style={{fontSize:14,fontWeight:700,color:"#2D5016"}}>{ct}</span></div>)}</div></div>}</div>);}
+function MapPage({members}){
+  const[selState,setSelState]=useState(null);
+  const lv=members.filter(m=>!m.isDeceased&&!m.isRootParent);const sc={};const ppl={};
+  lv.forEach(m=>{if(!m.state)return;sc[m.state]=(sc[m.state]||0)+1;if(!ppl[m.state])ppl[m.state]=[];ppl[m.state].push(m);
+    // Count spouse
+    if(m.spouse&&!m.spouseDeceased){sc[m.state]++;ppl[m.state].push({name:m.spouse,age:m.spouseAge||"",isSpouseOf:m.name,phone:"",email:""});}
+  });
+  const mx=Math.max(1,...Object.values(sc));const gc=c=>c?`rgba(27,58,14,${.25+(c/mx)*.75})`:"#F0EAE0";
+  const sw=Object.entries(sc).sort((a,b)=>b[1]-a[1]);
+  const selPeople=selState?ppl[selState]||[]:[];
+  return (<div><h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Where the Coleman Family Lives</h2>
+    <p style={{color:"#7A6B5A",fontSize:14,margin:"0 0 4px"}}>{Object.values(sc).reduce((a,b)=>a+b,0)} living members & spouses across {sw.length} states</p>
+    <p style={{color:"#9A8B7A",fontSize:12,margin:"0 0 20px",fontStyle:"italic"}}>Click a state or row below to see who lives there.</p>
+    <div style={{overflowX:"auto",marginBottom:24}}><div style={{display:"grid",gridTemplateColumns:"repeat(12,minmax(36px,1fr))",gap:3,minWidth:440}}>{Array.from({length:96}).map((_,idx)=>{const r=Math.floor(idx/12),c=idx%12;const se=Object.entries(STATE_GRID).find(([_,p])=>p[0]===r&&p[1]===c);if(!se)return <div key={idx}/>;const[st]=se;const ct=sc[st]||0;return <div key={idx} title={`${STATE_NAMES[st]}: ${ct}`} onClick={()=>ct>0&&setSelState(selState===st?null:st)} style={{background:selState===st?"#C4963A":gc(ct),borderRadius:4,padding:"6px 2px",textAlign:"center",border:ct>0?"1px solid rgba(27,58,14,.3)":"1px solid #E0D6C8",minHeight:36,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:ct>0?"pointer":"default",transition:"transform .1s",transform:selState===st?"scale(1.1)":"scale(1)"}}><div style={{fontSize:11,fontWeight:700,color:ct>0?"#fff":"#B0A090"}}>{st}</div>{ct>0&&<div style={{fontSize:10,fontWeight:800,color:"#fff"}}>{ct}</div>}</div>;})}</div></div>
+
+    {/* Selected state detail */}
+    {selState&&selPeople.length>0&&(<div style={{background:"#fff",borderRadius:12,padding:16,border:"2px solid #C4963A",marginBottom:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+        <div style={{fontSize:15,fontWeight:700,color:"#2D5016"}}>{STATE_NAMES[selState]} — {selPeople.length} {selPeople.length===1?"person":"people"}</div>
+        <button onClick={()=>setSelState(null)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#9A8B7A"}}>✕ Close</button>
+      </div>
+      {selPeople.map((p,i)=>(<div key={i} style={{padding:"10px 12px",borderBottom:i<selPeople.length-1?"1px solid #F0EAE0":"none",background:i%2===0?"#fff":"#FDFCF9"}}>
+        <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+          <span style={{fontSize:14,fontWeight:600,color:"#2D5016"}}>{p.name}</span>
+          {p.age&&<span style={{fontSize:12,color:"#9A8B7A"}}>(age {p.age})</span>}
+          {p.isSpouseOf&&<span style={{fontSize:11,color:"#8B7355",fontStyle:"italic"}}>spouse of {p.isSpouseOf}</span>}
+          {p.city&&<span style={{fontSize:12,color:"#7A6B5A"}}>{p.city}, {p.state}</span>}
+        </div>
+        {(p.phone||p.email||p.phone2||p.email2)&&(<div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:4}}>
+          {p.phone&&<span style={{fontSize:12,color:"#4A7A28"}}>📞 {p.phone}</span>}
+          {p.email&&<span style={{fontSize:12,color:"#4A7A28"}}>✉️ {p.email}</span>}
+          {p.phone2&&<span style={{fontSize:12,color:"#4A7A28"}}>📞 {p.phone2}</span>}
+          {p.email2&&<span style={{fontSize:12,color:"#4A7A28"}}>✉️ {p.email2}</span>}
+        </div>)}
+        {!p.phone&&!p.email&&!p.isSpouseOf&&<div style={{fontSize:11,color:"#B0A090",fontStyle:"italic",marginTop:2}}>No contact info — please update on the Members tab</div>}
+      </div>))}
+    </div>)}
+
+    {sw.length>0&&<div style={{background:"#fff",borderRadius:12,padding:16,border:"1px solid #C8DFB0"}}><div style={{fontSize:13,fontWeight:700,color:"#2D5016",marginBottom:10}}>Breakdown by State</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:8}}>{sw.map(([st,ct])=><div key={st} onClick={()=>setSelState(selState===st?null:st)} style={{display:"flex",justifyContent:"space-between",padding:"8px 12px",background:selState===st?"#FFF8EC":"#F5FAEF",borderRadius:6,border:selState===st?"2px solid #C4963A":"1px solid #D4DFC8",cursor:"pointer"}}><span style={{fontSize:14,fontWeight:500}}>{STATE_NAMES[st]}</span><span style={{fontSize:14,fontWeight:700,color:"#2D5016"}}>{ct}</span></div>)}</div></div>}
+  </div>);
+}
 
 /* ═══ BY-LAWS ═══ */
 function ByLawsPage({rootChildren}){
@@ -894,12 +943,14 @@ function AttendancePage({members,rootChildren,updateMember}){
             const status = rsvps[m.id]||"";
             const memberGuests = guests[m.id]||[];
             const isAdding = addingFor===m.id;
+            const kids18 = m.childrenUnder18||[];
+            const householdCount = 1 + (m.spouse&&!m.spouseDeceased?1:0) + kids18.filter(k=>!k.deceased).length;
             return (<div key={m.id} style={{borderBottom:mi<branchMembers.length-1?"1px solid #F0EAE0":"none",background:mi%2===0?"#fff":"#FDFCF9"}}>
               <div style={{padding:"8px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
                 <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:150,flexWrap:"wrap"}}>
                   <span style={{fontSize:13,fontWeight:m.isRootChild?600:400,color:"#3B2F1E"}}>{m.name}</span>
                   {m.age&&<span style={{fontSize:11,color:"#9A8B7A"}}>(age {m.age})</span>}
-                  {m.spouse&&<span style={{fontSize:11,color:"#8B7355"}}>⚭ {m.spouse}{m.spouseAge?` (${m.spouseAge})`:""}</span>}
+                  {householdCount>1&&<span style={{fontSize:10,fontWeight:600,background:"#E8F3DC",color:"#2D5016",padding:"1px 6px",borderRadius:8}}>{householdCount} in household</span>}
                 </div>
                 <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
                   <button onClick={()=>saveRsvp(m.id,"going")} style={{...statusStyle("going"),outline:status==="going"?"2px solid #2D5016":"none"}}>✓ Going</button>
@@ -908,7 +959,12 @@ function AttendancePage({members,rootChildren,updateMember}){
                   <button onClick={()=>setAddingFor(isAdding?null:m.id)} style={{padding:"4px 8px",borderRadius:12,fontSize:11,fontWeight:600,cursor:"pointer",border:"1px solid #D4C5E8",background:isAdding?"#6B4C8A":"#F0E8FF",color:isAdding?"#fff":"#6B4C8A"}}>+ Guest</button>
                 </div>
               </div>
-              {/* Guest list for this member */}
+              {/* Spouse & children under 18 */}
+              {(m.spouse||kids18.length>0)&&(<div style={{padding:"2px 14px 6px 30px"}}>
+                {m.spouse&&!m.spouseDeceased&&(<div style={{fontSize:12,color:"#8B7355",display:"flex",alignItems:"center",gap:4,marginBottom:2}}>💍 {m.spouse}{m.spouseAge?` (age ${m.spouseAge})`:""}</div>)}
+                {kids18.filter(k=>!k.deceased).map((k,ki)=>(<div key={ki} style={{fontSize:12,color:"#6B5A4A",display:"flex",alignItems:"center",gap:4,marginBottom:1}}>👶 {k.name}{k.age?` (age ${k.age})`:""}</div>))}
+              </div>)}
+              {/* Guest list */}
               {memberGuests.length>0&&(<div style={{padding:"4px 14px 8px 30px"}}>
                 {memberGuests.map((g,gi)=>(<div key={gi} style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"#6B4C8A",marginBottom:2}}>
                   <span>👤 {g.name}{g.age?` (age ${g.age})`:""}</span>
@@ -935,32 +991,49 @@ function CT({active,payload,label,vl}){if(!active||!payload?.length)return null;
 function CC({title,sub,children}){return (<div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0"}}><div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:2}}>{title}</div>{sub&&<div style={{fontSize:12,color:"#7A6B5A",marginBottom:12}}>{sub}</div>}{children}</div>);}
 
 function TrackerPage(){
-  const[resp,setResp]=useState([]);
-  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-reunion-r2");if(r?.value)setResp(JSON.parse(r.value));}catch{}})();},[]);
-  const t=resp.length;
-  if(t===0)return (<div style={{maxWidth:800,margin:"0 auto",textAlign:"center",padding:"60px 20px"}}><div style={{fontSize:48,marginBottom:16}}>📊</div><h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 8px",fontSize:22}}>No Results Yet</h2><p style={{color:"#7A6B5A",fontSize:14}}>Submit preferences on the Planner tab to see results here.</p></div>);
+  const[votes,setVotes]=useState([]);
+  const[roles,setRoles]=useState({});
+  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-first-vote");if(r?.value){const v=JSON.parse(r.value);setVotes(Array.isArray(v)?v:[v]);}}catch{} try{const r2=await store.get("coleman-roles-v2");if(r2?.value)setRoles(JSON.parse(r2.value));}catch{}})();},[]);
 
-  const cs={};REUNION_CITIES.forEach(c=>{cs[c]={total:0,count:0};});resp.forEach(p=>{if(p.cityRankings&&Array.isArray(p.cityRankings))p.cityRankings.forEach((c,i)=>{if(cs[c]){cs[c].total+=i+1;cs[c].count+=1;}});});
-  const cd=REUNION_CITIES.map(c=>({name:c.replace(/, \w+$/,""),full:c,avg:cs[c].count>0?+(cs[c].total/cs[c].count).toFixed(1):0,score:cs[c].count>0?+(REUNION_CITIES.length+1-(cs[c].total/cs[c].count)).toFixed(1):0,v:cs[c].count})).sort((a,b)=>b.score-a.score);
-  const mv={};resp.forEach(p=>{(p.bestMonths||[]).forEach(m=>{if(m)mv[m]=(mv[m]||0)+1;});});const md=MONTHS.map(m=>({name:m.slice(0,3),full:m,votes:mv[m]||0}));
-  const dv={};resp.forEach(p=>{if(p.preferredDays)dv[p.preferredDays]=(dv[p.preferredDays]||0)+1;});const dd=Object.entries(dv).map(([k,v])=>({name:k==="Thu-Sun"?"Thu–Sun":"Fri–Sun",votes:v})).sort((a,b)=>b.votes-a.votes);
-  const tv={};resp.forEach(p=>{if(p.travelMode)tv[p.travelMode]=(tv[p.travelMode]||0)+1;});const td=Object.entries(tv).map(([k,v])=>({name:k==="fly"?"Fly":k==="drive"?"Drive":"Either",votes:v})).sort((a,b)=>b.votes-a.votes);
-  const hy=resp.filter(p=>p.holidayWeekend==="yes").length;const hn=resp.filter(p=>p.holidayWeekend==="no").length;
-  const hd=[{name:"Yes",votes:hy},{name:"No",votes:hn}];
-  const topC=cd.length>0&&cd[0].v>0?cd[0]:null;const topM=Object.entries(mv).sort((a,b)=>b[1]-a[1]).slice(0,2);
+  // Tally votes
+  const yearVotes={"2027":0,"2028":0};
+  const weekendVotes={"last-july":0,"first-aug":0};
+  const vArr=Array.isArray(votes)?votes:[votes];
+  vArr.forEach(v=>{if(v?.year)yearVotes[v.year]=(yearVotes[v.year]||0)+1;if(v?.weekend)weekendVotes[v.weekend]=(weekendVotes[v.weekend]||0)+1;});
+  const totalYearVotes=Object.values(yearVotes).reduce((a,b)=>a+b,0);
+  const totalWeekendVotes=Object.values(weekendVotes).reduce((a,b)=>a+b,0);
+
+  const opsCount=Object.values(roles).filter(r=>r==="operations").length;
+  const logCount=Object.values(roles).filter(r=>r==="logistics").length;
+
+  const yearData=[{name:"2027",votes:yearVotes["2027"]},{name:"2028",votes:yearVotes["2028"]}];
+  const weekData=[{name:"Last wknd July",votes:weekendVotes["last-july"]},{name:"First wknd Aug",votes:weekendVotes["first-aug"]}];
 
   return (<div style={{maxWidth:900,margin:"0 auto"}}>
     <h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Reunion Tracker</h2>
-    <p style={{color:"#7A6B5A",fontSize:13,margin:"0 0 16px"}}>Based on {t} response{t===1?"":"s"}.</p>
-    {topC&&topM.length>=2&&(<div style={{background:"linear-gradient(135deg,#2D5016,#4A7A28)",borderRadius:14,padding:18,color:"#fff",marginBottom:16}}><div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"2px",opacity:.7,marginBottom:8}}>Front-Runners</div><div style={{display:"flex",gap:20,flexWrap:"wrap"}}><div><div style={{fontSize:11,opacity:.7}}>Top City</div><div style={{fontSize:18,fontWeight:700}}>{topC.full}</div></div><div><div style={{fontSize:11,opacity:.7}}>Top Months</div><div style={{fontSize:18,fontWeight:700}}>{topM.map(m=>m[0]).join(" & ")}</div></div><div><div style={{fontSize:11,opacity:.7}}>Responses</div><div style={{fontSize:18,fontWeight:700}}>{t}</div></div></div></div>)}
-    <div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <CC title="Host City Preference" sub={`Higher score = more preferred (${t} responses)`}><div style={{width:"100%",height:cd.length*50+30}}><ResponsiveContainer width="100%" height="100%"><BarChart data={cd} layout="vertical" margin={{top:5,right:30,left:10,bottom:5}} barCategoryGap="20%"><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" horizontal={false}/><XAxis type="number" domain={[0,REUNION_CITIES.length]} tick={{fontSize:11,fill:"#7A6B5A"}}/><YAxis type="category" dataKey="name" width={110} tick={{fontSize:12,fontWeight:600,fill:"#3B2F1E"}} axisLine={false} tickLine={false}/><Tooltip content={<CT vl="Score"/>}/><Bar dataKey="score" radius={[0,6,6,0]} barSize={26}>{cd.map((_,i)=> <Cell key={i} fill={i===0?"#2D5016":i===1?"#3A7D1E":"#8BB873"}/>)}<LabelList dataKey="score" position="right" style={{fontSize:12,fontWeight:700,fill:"#2D5016"}}/></Bar></BarChart></ResponsiveContainer></div></CC>
-      <CC title="Preferred Months" sub="Votes across 1st and 2nd choices"><div style={{width:"100%",height:260}}><ResponsiveContainer width="100%" height="100%"><BarChart data={md} margin={{top:5,right:20,left:0,bottom:5}}><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/><XAxis dataKey="name" tick={{fontSize:11,fill:"#7A6B5A"}}/><YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/><Tooltip content={<CT vl="Votes"/>}/><Bar dataKey="votes" radius={[6,6,0,0]} barSize={30}>{md.map((e,i)=> <Cell key={i} fill={e.votes>0?CG[i%CG.length]:"#E0D6C8"}/>)}<LabelList dataKey="votes" position="top" style={{fontSize:11,fontWeight:700,fill:"#2D5016"}} formatter={v=>v>0?v:""}/></Bar></BarChart></ResponsiveContainer></div></CC>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:14}}>
-        <CC title="Duration"><div style={{width:"100%",height:160}}><ResponsiveContainer width="100%" height="100%"><BarChart data={dd} margin={{top:5,right:20,left:0,bottom:5}}><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/><XAxis dataKey="name" tick={{fontSize:11,fill:"#7A6B5A"}}/><YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/><Tooltip content={<CT vl="Votes"/>}/><Bar dataKey="votes" radius={[6,6,0,0]} barSize={44}>{dd.map((_,i)=> <Cell key={i} fill={CG[i+1]}/>)}<LabelList dataKey="votes" position="top" style={{fontSize:12,fontWeight:700,fill:"#2D5016"}}/></Bar></BarChart></ResponsiveContainer></div></CC>
-        <CC title="Travel"><div style={{width:"100%",height:160}}><ResponsiveContainer width="100%" height="100%"><BarChart data={td} margin={{top:5,right:20,left:0,bottom:5}}><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/><XAxis dataKey="name" tick={{fontSize:11,fill:"#7A6B5A"}}/><YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/><Tooltip content={<CT vl="Votes"/>}/><Bar dataKey="votes" radius={[6,6,0,0]} barSize={44}>{td.map((_,i)=> <Cell key={i} fill={CG[i+2]}/>)}<LabelList dataKey="votes" position="top" style={{fontSize:12,fontWeight:700,fill:"#2D5016"}}/></Bar></BarChart></ResponsiveContainer></div></CC>
-        <CC title="Holiday Weekend?"><div style={{width:"100%",height:160}}><ResponsiveContainer width="100%" height="100%"><BarChart data={hd} margin={{top:5,right:20,left:0,bottom:5}}><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/><XAxis dataKey="name" tick={{fontSize:11,fill:"#7A6B5A"}}/><YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/><Tooltip content={<CT vl="Votes"/>}/><Bar dataKey="votes" radius={[6,6,0,0]} barSize={44}><Cell fill="#2D5016"/><Cell fill="#D4A843"/><LabelList dataKey="votes" position="top" style={{fontSize:12,fontWeight:700,fill:"#2D5016"}}/></Bar></BarChart></ResponsiveContainer></div></CC>
+    <p style={{color:"#7A6B5A",fontSize:13,margin:"0 0 16px"}}>Live results from the Planner page votes and role signups.</p>
+
+    {/* Summary banner */}
+    <div style={{background:"linear-gradient(135deg,#2D5016,#4A7A28)",borderRadius:14,padding:18,color:"#fff",marginBottom:16}}>
+      <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"2px",opacity:.7,marginBottom:8}}>Current Leaders</div>
+      <div style={{display:"flex",gap:24,flexWrap:"wrap"}}>
+        <div><div style={{fontSize:11,opacity:.7}}>Year</div><div style={{fontSize:20,fontWeight:700}}>{yearVotes["2027"]>=yearVotes["2028"]?"2027":"2028"}{yearVotes["2027"]===yearVotes["2028"]&&totalYearVotes>0?" (Tied)":""}</div></div>
+        <div><div style={{fontSize:11,opacity:.7}}>Weekend</div><div style={{fontSize:20,fontWeight:700}}>{weekendVotes["last-july"]>=weekendVotes["first-aug"]?"Last wknd July":"First wknd Aug"}{weekendVotes["last-july"]===weekendVotes["first-aug"]&&totalWeekendVotes>0?" (Tied)":""}</div></div>
+        <div><div style={{fontSize:11,opacity:.7}}>Ops Support</div><div style={{fontSize:20,fontWeight:700}}>{opsCount} signed up</div></div>
+        <div><div style={{fontSize:11,opacity:.7}}>Logistics Support</div><div style={{fontSize:20,fontWeight:700}}>{logCount} signed up</div></div>
       </div>
+    </div>
+
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:14}}>
+      {/* Year vote chart */}
+      <CC title="Reunion Year" sub={`${totalYearVotes} vote${totalYearVotes===1?"":"s"}`}>
+        {totalYearVotes>0?(<div style={{width:"100%",height:180}}><ResponsiveContainer width="100%" height="100%"><BarChart data={yearData} margin={{top:5,right:20,left:0,bottom:5}}><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/><XAxis dataKey="name" tick={{fontSize:14,fill:"#2D5016",fontWeight:700}}/><YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/><Tooltip content={<CT vl="Votes"/>}/><Bar dataKey="votes" radius={[6,6,0,0]} barSize={50}><Cell fill="#2D5016"/><Cell fill="#4A8C28"/><LabelList dataKey="votes" position="top" style={{fontSize:16,fontWeight:800,fill:"#2D5016"}}/></Bar></BarChart></ResponsiveContainer></div>):(<div style={{textAlign:"center",padding:20,color:"#9A8B7A",fontStyle:"italic"}}>No year votes yet</div>)}
+      </CC>
+
+      {/* Weekend vote chart */}
+      <CC title="Preferred Weekend" sub={`${totalWeekendVotes} vote${totalWeekendVotes===1?"":"s"}`}>
+        {totalWeekendVotes>0?(<div style={{width:"100%",height:180}}><ResponsiveContainer width="100%" height="100%"><BarChart data={weekData} margin={{top:5,right:20,left:0,bottom:5}}><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/><XAxis dataKey="name" tick={{fontSize:12,fill:"#2D5016",fontWeight:600}}/><YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/><Tooltip content={<CT vl="Votes"/>}/><Bar dataKey="votes" radius={[6,6,0,0]} barSize={50}><Cell fill="#2D5016"/><Cell fill="#D4A843"/><LabelList dataKey="votes" position="top" style={{fontSize:16,fontWeight:800,fill:"#2D5016"}}/></Bar></BarChart></ResponsiveContainer></div>):(<div style={{textAlign:"center",padding:20,color:"#9A8B7A",fontStyle:"italic"}}>No weekend votes yet</div>)}
+      </CC>
     </div>
   </div>);
 }
