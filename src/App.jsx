@@ -613,10 +613,39 @@ function ByLawsPage({rootChildren}){
 
 /* ═══ REUNION PLANNER — role assignment + first reunion vote ═══ */
 function ReunionPage(){
-  const[roles,setRoles]=useState({});const[votes,setVotes]=useState({});const[saved,setSaved]=useState(false);
-  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-roles-v2");if(r?.value)setRoles(JSON.parse(r.value));}catch{} try{const r2=await store.get("coleman-first-vote");if(r2?.value)setVotes(JSON.parse(r2.value));}catch{}})();},[]);
-  const saveRoles=async(d)=>{setRoles(d);try{await store.set("coleman-roles-v2",JSON.stringify(d));setSaved(true);setTimeout(()=>setSaved(false),2000);}catch{}};
-  const saveVotes=async(d)=>{setVotes(d);try{await store.set("coleman-first-vote",JSON.stringify(d));}catch{}};
+  const[roles,setRoles]=useState({});
+  const[allVotes,setAllVotes]=useState([]);
+  const[voterName,setVoterName]=useState("");
+  const[myYear,setMyYear]=useState("");
+  const[myWeekend,setMyWeekend]=useState("");
+  const[hasVoted,setHasVoted]=useState(false);
+  const[voteSubmitted,setVoteSubmitted]=useState(false);
+  const[roleSaved,setRoleSaved]=useState(false);
+
+  useEffect(()=>{(async()=>{
+    try{const r=await store.get("coleman-roles-v2");if(r?.value)setRoles(JSON.parse(r.value));}catch{}
+    try{const r2=await store.get("coleman-votes-all");if(r2?.value){const v=JSON.parse(r2.value);setAllVotes(Array.isArray(v)?v:[]);}}catch{}
+    // Check if this device already voted
+    try{const lv=localStorage.getItem("coleman-voted-flag");if(lv)setHasVoted(true);}catch{}
+  })();},[]);
+
+  const submitVote=async()=>{
+    if(!voterName.trim())return alert("Please enter your name so we know who voted.");
+    if(!myYear)return alert("Please select a year.");
+    if(!myWeekend)return alert("Please select a weekend.");
+    // Check if name already voted
+    const nameLower=voterName.trim().toLowerCase();
+    if(allVotes.some(v=>(v.name||"").toLowerCase()===nameLower))return alert(`${voterName.trim()} has already voted. Each person gets one vote.`);
+    const newVote={name:voterName.trim(),year:myYear,weekend:myWeekend,ts:new Date().toISOString()};
+    const updated=[...allVotes,newVote];
+    setAllVotes(updated);
+    setHasVoted(true);
+    setVoteSubmitted(true);
+    try{await store.set("coleman-votes-all",JSON.stringify(updated));}catch{}
+    try{localStorage.setItem("coleman-voted-flag","true");}catch{}
+  };
+
+  const saveRoles=async(d)=>{setRoles(d);try{await store.set("coleman-roles-v2",JSON.stringify(d));setRoleSaved(true);setTimeout(()=>setRoleSaved(false),2000);}catch{}};
   const setRole=(id,val)=>{const n={...roles,[id]:val};saveRoles(n);};
   const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};
 
@@ -646,35 +675,49 @@ function ReunionPage(){
       <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:"2px",opacity:.7,marginBottom:8}}>Restart of the Coleman Family Reunion</div>
       <p style={{fontSize:15,lineHeight:1.6,margin:"0 0 10px"}}>As probably the biggest family branch, <strong>Shirley's Family</strong> will host the first Coleman Family Reunion in <strong>Northeast Ohio (Akron area)</strong>.</p>
       <p style={{fontSize:14,lineHeight:1.6,margin:"0 0 10px",opacity:.9}}>We need the family to vote on two things to get started. Once we know the year, we will post estimated costs. We will do our best to adhere to the guidelines on the By-Laws page.</p>
-      <p style={{fontSize:13,lineHeight:1.6,margin:0,opacity:.8}}>In order to execute this reunion, we need family branches to sign up for support roles. If your family is willing to help, please select a support role below. The remaining hosting rotation and future locations will be discussed and voted on at the first Business Meeting.</p>
+      <p style={{fontSize:13,lineHeight:1.6,margin:0,opacity:.8}}>In order to execute this reunion, we need family branches to sign up for support roles. If your family is willing to help, please select a support role below.</p>
     </div>
 
-    {/* Voting section */}
+    {/* ═══ VOTING SECTION ═══ */}
     <div style={{background:"#fff",borderRadius:14,padding:20,border:"1px solid #C8DFB0",marginBottom:16}}>
-      <div style={{fontSize:15,fontWeight:700,color:"#2D5016",marginBottom:12}}>🗳️ Family Vote — Help Us Decide</div>
+      <div style={{fontSize:15,fontWeight:700,color:"#2D5016",marginBottom:4}}>🗳️ Family Vote — Help Us Decide</div>
+      <p style={{fontSize:12,color:"#7A6B5A",margin:"0 0 14px"}}>Each person gets one vote. Enter your name and make your selections, then hit Submit. Check the <strong>📊 Tracker</strong> tab to see results.</p>
 
-      <div style={{marginBottom:16}}>
-        <label style={{display:"block",fontSize:13,fontWeight:600,color:"#2D5016",marginBottom:6}}>What year should the first reunion be held?</label>
-        <div style={{display:"flex",gap:8}}>
-          {["2027","2028"].map(yr=>(<button key={yr} onClick={()=>saveVotes({...votes,year:yr})} style={{flex:1,padding:"14px",borderRadius:10,border:votes.year===yr?"2px solid #2D5016":"2px solid #E0D6C8",background:votes.year===yr?"#E8F3DC":"#fff",cursor:"pointer",fontSize:16,fontWeight:700,color:votes.year===yr?"#2D5016":"#7A6B5A"}}>{yr}</button>))}
+      {hasVoted||voteSubmitted ? (
+        <div style={{background:"#E8F3DC",borderRadius:10,padding:20,border:"1px solid #B8D4A0",textAlign:"center"}}>
+          <div style={{fontSize:28,marginBottom:6}}>✓</div>
+          <div style={{fontSize:16,fontWeight:700,color:"#2D5016",marginBottom:4}}>{voteSubmitted?"Vote Submitted!":"You've Already Voted"}</div>
+          <p style={{fontSize:13,color:"#4A7A28",margin:0}}>Check the <strong>📊 Tracker</strong> tab to see how the family is voting.</p>
+          <p style={{fontSize:12,color:"#7A6B5A",marginTop:8}}>{allVotes.length} vote{allVotes.length===1?"":"s"} submitted so far.</p>
         </div>
-      </div>
-
-      <div>
-        <label style={{display:"block",fontSize:13,fontWeight:600,color:"#2D5016",marginBottom:6}}>Which weekend do you prefer?</label>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {[["last-july","Last full weekend in July"],["first-aug","First full weekend in August"]].map(([k,label])=>(<button key={k} onClick={()=>saveVotes({...votes,weekend:k})} style={{padding:"14px",borderRadius:10,border:votes.weekend===k?"2px solid #2D5016":"2px solid #E0D6C8",background:votes.weekend===k?"#E8F3DC":"#fff",cursor:"pointer",fontSize:14,fontWeight:600,color:votes.weekend===k?"#2D5016":"#7A6B5A",textAlign:"left"}}>{label}</button>))}
+      ) : (<>
+        <div style={{marginBottom:14}}>
+          <label style={{display:"block",fontSize:13,fontWeight:600,color:"#2D5016",marginBottom:6}}>Your Name</label>
+          <input style={is} value={voterName} onChange={e=>setVoterName(e.target.value)} placeholder="Enter your full name"/>
         </div>
-      </div>
+        <div style={{marginBottom:14}}>
+          <label style={{display:"block",fontSize:13,fontWeight:600,color:"#2D5016",marginBottom:6}}>What year should the first reunion be held?</label>
+          <div style={{display:"flex",gap:8}}>
+            {["2027","2028"].map(yr=>(<button key={yr} onClick={()=>setMyYear(yr)} style={{flex:1,padding:"14px",borderRadius:10,border:myYear===yr?"2px solid #2D5016":"2px solid #E0D6C8",background:myYear===yr?"#E8F3DC":"#fff",cursor:"pointer",fontSize:16,fontWeight:700,color:myYear===yr?"#2D5016":"#7A6B5A"}}>{yr}</button>))}
+          </div>
+        </div>
+        <div style={{marginBottom:16}}>
+          <label style={{display:"block",fontSize:13,fontWeight:600,color:"#2D5016",marginBottom:6}}>Which weekend do you prefer?</label>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {[["last-july","Last full weekend in July"],["first-aug","First full weekend in August"]].map(([k,label])=>(<button key={k} onClick={()=>setMyWeekend(k)} style={{padding:"14px",borderRadius:10,border:myWeekend===k?"2px solid #2D5016":"2px solid #E0D6C8",background:myWeekend===k?"#E8F3DC":"#fff",cursor:"pointer",fontSize:14,fontWeight:600,color:myWeekend===k?"#2D5016":"#7A6B5A",textAlign:"left"}}>{label}</button>))}
+          </div>
+        </div>
+        <button onClick={submitVote} style={{padding:"14px 32px",background:"linear-gradient(135deg,#2D5016,#4A7A28)",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontSize:15,fontWeight:700,width:"100%",boxShadow:"0 4px 12px rgba(45,80,22,0.3)"}}>Submit My Vote</button>
+      </>)}
     </div>
 
-    {/* Support role assignment */}
+    {/* ═══ SUPPORT ROLE SECTION ═══ */}
     <div style={{background:"#fff",borderRadius:14,padding:20,border:"1px solid #C8DFB0"}}>
       <div style={{fontSize:15,fontWeight:700,color:"#2D5016",marginBottom:4}}>Family Roles for the Reunion</div>
-      <p style={{fontSize:13,color:"#7A6B5A",margin:"0 0 6px",lineHeight:1.5}}>Each family branch can sign up for a role. Shirley's Family is locked in as the Host for the Akron reunion. We need at least one family for Operations Support and one for Logistics Support. Refer to the <strong>📜 By-Laws</strong> tab (Sections 6 & 7) for details on what each role involves.</p>
-      <p style={{fontSize:12,color:"#8B7355",margin:"0 0 14px"}}>The support families will stay with the Host Family unless voted to change at the Business Meeting.</p>
+      <p style={{fontSize:13,color:"#7A6B5A",margin:"0 0 6px",lineHeight:1.5}}>Shirley's Family is the Host. We need at least one Operations Support and one Logistics Support family. Refer to the <strong>📜 By-Laws</strong> tab (Sections 6 & 7) for details.</p>
+      <p style={{fontSize:12,color:"#8B7355",margin:"0 0 14px"}}>Support families stay with the Host Family unless voted to change at the Business Meeting.</p>
 
-      {supportCount < 2 && <div style={{background:"#FFF8EC",borderRadius:8,padding:10,border:"1px solid #E8DFD0",marginBottom:14,fontSize:13,color:"#C4963A",fontWeight:600}}>⚠️ We still need {2-supportCount} more support {2-supportCount===1?"family":"families"} to sign up to make this reunion happen.</div>}
+      {supportCount < 2 && <div style={{background:"#FFF8EC",borderRadius:8,padding:10,border:"1px solid #E8DFD0",marginBottom:14,fontSize:13,color:"#C4963A",fontWeight:600}}>⚠️ We still need {2-supportCount} more support {2-supportCount===1?"family":"families"} to make this reunion happen.</div>}
       {supportCount >= 2 && <div style={{background:"#E8F3DC",borderRadius:8,padding:10,border:"1px solid #B8D4A0",marginBottom:14,fontSize:13,color:"#2D5016",fontWeight:600}}>✓ Support roles are filled! Thank you to the families who stepped up.</div>}
 
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -700,13 +743,13 @@ function ReunionPage(){
           </div>);
         })}
       </div>
-      {saved&&<div style={{marginTop:10,textAlign:"center",fontSize:13,color:"#4A7A28",fontWeight:600}}>✓ Saved</div>}
+      {roleSaved&&<div style={{marginTop:10,textAlign:"center",fontSize:13,color:"#4A7A28",fontWeight:600}}>✓ Role Saved</div>}
 
       {/* Future rotation note */}
       <div style={{background:"#F5FAEF",borderRadius:12,padding:16,border:"1px solid #C8DFB0",marginTop:16}}>
         <div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:6}}>📋 Looking Ahead — Building the Rotation</div>
         <p style={{fontSize:13,color:"#3B2F1E",lineHeight:1.6,margin:"0 0 8px"}}>Per the By-Laws (Section 8), the goal is that each family branch serves as Host or in a Support role approximately once every 8 years. To make that work on a biennial schedule, we need at least <strong>4 Host City/Family commitments</strong> with corresponding Support families for each reunion.</p>
-        <p style={{fontSize:13,color:"#3B2F1E",lineHeight:1.6,margin:"0 0 8px"}}>This first reunion with Shirley's Family hosting in Akron is the starting point. At the Business Meeting, we will discuss and vote on the full rotation — identifying the next 3 Host Families and their preferred cities so every branch knows well in advance when their turn is coming.</p>
+        <p style={{fontSize:13,color:"#3B2F1E",lineHeight:1.6,margin:"0 0 8px"}}>This first reunion with Shirley's Family hosting in Akron is the starting point. At the Business Meeting, we will discuss and vote on the full rotation.</p>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:6,marginTop:10}}>
           {[["Reunion 1","Shirley's Family","Akron, OH ✓"],["Reunion 2","To be voted","TBD"],["Reunion 3","To be voted","TBD"],["Reunion 4","To be voted","TBD"]].map(([r,f,c])=>(
             <div key={r} style={{padding:"8px 10px",background:r==="Reunion 1"?"#E8F3DC":"#fff",borderRadius:8,border:"1px solid #D4DFC8",textAlign:"center"}}>
@@ -716,7 +759,7 @@ function ReunionPage(){
             </div>
           ))}
         </div>
-        <p style={{fontSize:12,color:"#8B7355",marginTop:10,fontStyle:"italic",lineHeight:1.5}}>Each reunion also needs an Operations Support family and a Logistics Support family. With 4 host rotations and 2 support roles each, that's 12 family commitments spread across 8 years — ensuring responsibility is shared fairly across all branches.</p>
+        <p style={{fontSize:12,color:"#8B7355",marginTop:10,fontStyle:"italic",lineHeight:1.5}}>Each reunion also needs an Operations Support family and a Logistics Support family. With 4 host rotations and 2 support roles each, that's 12 family commitments spread across 8 years.</p>
       </div>
     </div>
   </div>);
@@ -991,49 +1034,76 @@ function CT({active,payload,label,vl}){if(!active||!payload?.length)return null;
 function CC({title,sub,children}){return (<div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0"}}><div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:2}}>{title}</div>{sub&&<div style={{fontSize:12,color:"#7A6B5A",marginBottom:12}}>{sub}</div>}{children}</div>);}
 
 function TrackerPage(){
-  const[votes,setVotes]=useState([]);
+  const[allVotes,setAllVotes]=useState([]);
   const[roles,setRoles]=useState({});
-  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-first-vote");if(r?.value){const v=JSON.parse(r.value);setVotes(Array.isArray(v)?v:[v]);}}catch{} try{const r2=await store.get("coleman-roles-v2");if(r2?.value)setRoles(JSON.parse(r2.value));}catch{}})();},[]);
+  useEffect(()=>{(async()=>{
+    try{const r=await store.get("coleman-votes-all");if(r?.value){const v=JSON.parse(r.value);setAllVotes(Array.isArray(v)?v:[]);}}catch{}
+    try{const r2=await store.get("coleman-roles-v2");if(r2?.value)setRoles(JSON.parse(r2.value));}catch{}
+  })();},[]);
 
-  // Tally votes
   const yearVotes={"2027":0,"2028":0};
   const weekendVotes={"last-july":0,"first-aug":0};
-  const vArr=Array.isArray(votes)?votes:[votes];
-  vArr.forEach(v=>{if(v?.year)yearVotes[v.year]=(yearVotes[v.year]||0)+1;if(v?.weekend)weekendVotes[v.weekend]=(weekendVotes[v.weekend]||0)+1;});
-  const totalYearVotes=Object.values(yearVotes).reduce((a,b)=>a+b,0);
-  const totalWeekendVotes=Object.values(weekendVotes).reduce((a,b)=>a+b,0);
+  allVotes.forEach(v=>{if(v?.year)yearVotes[v.year]=(yearVotes[v.year]||0)+1;if(v?.weekend)weekendVotes[v.weekend]=(weekendVotes[v.weekend]||0)+1;});
+  const totalVotes=allVotes.length;
 
   const opsCount=Object.values(roles).filter(r=>r==="operations").length;
   const logCount=Object.values(roles).filter(r=>r==="logistics").length;
+
+  const siblings=[
+    {id:"child-01",name:"Doris's"},{id:"child-02",name:"Samuel's"},{id:"child-03",name:"Luther's"},
+    {id:"child-04",name:"Sammie's"},{id:"child-05",name:"Shirley's"},{id:"child-06",name:"Paulette's"},
+    {id:"child-07",name:"Norma's"},{id:"child-08",name:"Jackie's"},{id:"child-09",name:"Arlene's"},
+    {id:"child-10",name:"Arthur Jr's"},{id:"child-11",name:"Charles's"},{id:"child-12",name:"Kevin's"},
+    {id:"child-13",name:"Evan's"},
+  ];
 
   const yearData=[{name:"2027",votes:yearVotes["2027"]},{name:"2028",votes:yearVotes["2028"]}];
   const weekData=[{name:"Last wknd July",votes:weekendVotes["last-july"]},{name:"First wknd Aug",votes:weekendVotes["first-aug"]}];
 
   return (<div style={{maxWidth:900,margin:"0 auto"}}>
     <h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Reunion Tracker</h2>
-    <p style={{color:"#7A6B5A",fontSize:13,margin:"0 0 16px"}}>Live results from the Planner page votes and role signups.</p>
+    <p style={{color:"#7A6B5A",fontSize:13,margin:"0 0 16px"}}>Live results from the Planner page — {totalVotes} vote{totalVotes===1?"":"s"} submitted.</p>
 
     {/* Summary banner */}
-    <div style={{background:"linear-gradient(135deg,#2D5016,#4A7A28)",borderRadius:14,padding:18,color:"#fff",marginBottom:16}}>
+    {totalVotes>0&&(<div style={{background:"linear-gradient(135deg,#2D5016,#4A7A28)",borderRadius:14,padding:18,color:"#fff",marginBottom:16}}>
       <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"2px",opacity:.7,marginBottom:8}}>Current Leaders</div>
       <div style={{display:"flex",gap:24,flexWrap:"wrap"}}>
-        <div><div style={{fontSize:11,opacity:.7}}>Year</div><div style={{fontSize:20,fontWeight:700}}>{yearVotes["2027"]>=yearVotes["2028"]?"2027":"2028"}{yearVotes["2027"]===yearVotes["2028"]&&totalYearVotes>0?" (Tied)":""}</div></div>
-        <div><div style={{fontSize:11,opacity:.7}}>Weekend</div><div style={{fontSize:20,fontWeight:700}}>{weekendVotes["last-july"]>=weekendVotes["first-aug"]?"Last wknd July":"First wknd Aug"}{weekendVotes["last-july"]===weekendVotes["first-aug"]&&totalWeekendVotes>0?" (Tied)":""}</div></div>
-        <div><div style={{fontSize:11,opacity:.7}}>Ops Support</div><div style={{fontSize:20,fontWeight:700}}>{opsCount} signed up</div></div>
-        <div><div style={{fontSize:11,opacity:.7}}>Logistics Support</div><div style={{fontSize:20,fontWeight:700}}>{logCount} signed up</div></div>
+        <div><div style={{fontSize:11,opacity:.7}}>Year</div><div style={{fontSize:20,fontWeight:700}}>{yearVotes["2027"]>yearVotes["2028"]?"2027":yearVotes["2028"]>yearVotes["2027"]?"2028":"Tied"}</div></div>
+        <div><div style={{fontSize:11,opacity:.7}}>Weekend</div><div style={{fontSize:20,fontWeight:700}}>{weekendVotes["last-july"]>weekendVotes["first-aug"]?"Last wknd July":weekendVotes["first-aug"]>weekendVotes["last-july"]?"First wknd Aug":"Tied"}</div></div>
+        <div><div style={{fontSize:11,opacity:.7}}>Total Votes</div><div style={{fontSize:20,fontWeight:700}}>{totalVotes}</div></div>
+        <div><div style={{fontSize:11,opacity:.7}}>Ops Support</div><div style={{fontSize:20,fontWeight:700}}>{opsCount}</div></div>
+        <div><div style={{fontSize:11,opacity:.7}}>Logistics</div><div style={{fontSize:20,fontWeight:700}}>{logCount}</div></div>
       </div>
+    </div>)}
+
+    {/* Charts */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:14,marginBottom:16}}>
+      <CC title="Reunion Year" sub={`${totalVotes} vote${totalVotes===1?"":"s"}`}>
+        {totalVotes>0?(<div style={{width:"100%",height:180}}><ResponsiveContainer width="100%" height="100%"><BarChart data={yearData} margin={{top:5,right:20,left:0,bottom:5}}><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/><XAxis dataKey="name" tick={{fontSize:14,fill:"#2D5016",fontWeight:700}}/><YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/><Tooltip content={<CT vl="Votes"/>}/><Bar dataKey="votes" radius={[6,6,0,0]} barSize={50}><Cell fill="#2D5016"/><Cell fill="#4A8C28"/><LabelList dataKey="votes" position="top" style={{fontSize:16,fontWeight:800,fill:"#2D5016"}}/></Bar></BarChart></ResponsiveContainer></div>):(<div style={{textAlign:"center",padding:20,color:"#9A8B7A",fontStyle:"italic"}}>No votes yet — go to the Planner tab to vote.</div>)}
+      </CC>
+      <CC title="Preferred Weekend" sub={`${totalVotes} vote${totalVotes===1?"":"s"}`}>
+        {totalVotes>0?(<div style={{width:"100%",height:180}}><ResponsiveContainer width="100%" height="100%"><BarChart data={weekData} margin={{top:5,right:20,left:0,bottom:5}}><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/><XAxis dataKey="name" tick={{fontSize:12,fill:"#2D5016",fontWeight:600}}/><YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/><Tooltip content={<CT vl="Votes"/>}/><Bar dataKey="votes" radius={[6,6,0,0]} barSize={50}><Cell fill="#2D5016"/><Cell fill="#D4A843"/><LabelList dataKey="votes" position="top" style={{fontSize:16,fontWeight:800,fill:"#2D5016"}}/></Bar></BarChart></ResponsiveContainer></div>):(<div style={{textAlign:"center",padding:20,color:"#9A8B7A",fontStyle:"italic"}}>No votes yet</div>)}
+      </CC>
     </div>
 
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:14}}>
-      {/* Year vote chart */}
-      <CC title="Reunion Year" sub={`${totalYearVotes} vote${totalYearVotes===1?"":"s"}`}>
-        {totalYearVotes>0?(<div style={{width:"100%",height:180}}><ResponsiveContainer width="100%" height="100%"><BarChart data={yearData} margin={{top:5,right:20,left:0,bottom:5}}><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/><XAxis dataKey="name" tick={{fontSize:14,fill:"#2D5016",fontWeight:700}}/><YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/><Tooltip content={<CT vl="Votes"/>}/><Bar dataKey="votes" radius={[6,6,0,0]} barSize={50}><Cell fill="#2D5016"/><Cell fill="#4A8C28"/><LabelList dataKey="votes" position="top" style={{fontSize:16,fontWeight:800,fill:"#2D5016"}}/></Bar></BarChart></ResponsiveContainer></div>):(<div style={{textAlign:"center",padding:20,color:"#9A8B7A",fontStyle:"italic"}}>No year votes yet</div>)}
-      </CC>
+    {/* Individual votes table - hidden for privacy, names stored only to prevent duplicates */}
 
-      {/* Weekend vote chart */}
-      <CC title="Preferred Weekend" sub={`${totalWeekendVotes} vote${totalWeekendVotes===1?"":"s"}`}>
-        {totalWeekendVotes>0?(<div style={{width:"100%",height:180}}><ResponsiveContainer width="100%" height="100%"><BarChart data={weekData} margin={{top:5,right:20,left:0,bottom:5}}><CartesianGrid strokeDasharray="3 3" stroke="#E8DFD0" vertical={false}/><XAxis dataKey="name" tick={{fontSize:12,fill:"#2D5016",fontWeight:600}}/><YAxis allowDecimals={false} tick={{fontSize:11,fill:"#7A6B5A"}}/><Tooltip content={<CT vl="Votes"/>}/><Bar dataKey="votes" radius={[6,6,0,0]} barSize={50}><Cell fill="#2D5016"/><Cell fill="#D4A843"/><LabelList dataKey="votes" position="top" style={{fontSize:16,fontWeight:800,fill:"#2D5016"}}/></Bar></BarChart></ResponsiveContainer></div>):(<div style={{textAlign:"center",padding:20,color:"#9A8B7A",fontStyle:"italic"}}>No weekend votes yet</div>)}
-      </CC>
+    {/* Support roles */}
+    <div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0"}}>
+      <div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:10}}>Support Role Signups</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:8}}>
+        {siblings.map(sib=>{
+          const role=sib.id==="child-05"?"host":(roles[sib.id]||"");
+          const label=role==="host"?"🏠 Host":role==="operations"?"🔧 Operations":role==="logistics"?"🚛 Logistics":"—";
+          const bg=role==="host"?"#FFF8EC":role?"#E8F3DC":"#fff";
+          const bc=role==="host"?"#C4963A":role?"#2D5016":"#E0D6C8";
+          return (<div key={sib.id} style={{padding:"8px 12px",background:bg,borderRadius:8,border:`1px solid ${bc}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:13,fontWeight:500}}>{sib.name} Family</span>
+            <span style={{fontSize:12,fontWeight:600,color:role==="host"?"#C4963A":role?"#2D5016":"#B0A090"}}>{label}</span>
+          </div>);
+        })}
+      </div>
     </div>
   </div>);
 }
+
