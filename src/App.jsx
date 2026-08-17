@@ -258,7 +258,7 @@ function AppContent(){
       {saveMsg&&<div style={{background:"#C4963A",color:"#fff",textAlign:"center",padding:"3px",fontSize:12,fontWeight:600}}>{saveMsg}</div>}
       <div style={{maxWidth:1200,margin:"0 auto",padding:"16px 14px"}}>
         {page==="tree"&&<TreeWrapper members={members} rootChildren={rootChildren} goEdit={goEdit}/>}
-        {page==="form"&&<FormPage members={members} rootChildren={rootChildren} addMember={addMember} updateMember={updateMember} editTargetId={editTargetId} setEditTargetId={setEditTargetId}/>}
+        {page==="form"&&<FormPage members={members} rootChildren={rootChildren} addMember={addMember} updateMember={updateMember} deleteMember={deleteMember} editTargetId={editTargetId} setEditTargetId={setEditTargetId}/>}
         {page==="map"&&<MapPage members={members}/>}
         {page==="bylaws"&&<ByLawsPage rootChildren={rootChildren}/>}
         {page==="reunion"&&<ReunionPage/>}
@@ -332,30 +332,47 @@ function OakTree({members,rootChildren,goEdit}){
 
 /* ═══ LIST VIEW — edit button beside each name ═══ */
 function ListView({members,rootChildren,goEdit}){
-  const[exp,setExp]=useState({});const rp=members.filter(m=>m.isRootParent);const tog=id=>setExp(p=>({...p,[id]:!p[id]}));
-  const eBtn=id=>(<button onClick={e=>{e.stopPropagation();goEdit(id);}} style={{background:"#E8F3DC",border:"1px solid #B8D4A0",borderRadius:4,padding:"2px 8px",cursor:"pointer",fontSize:11,color:"#2D5016",fontWeight:600,marginLeft:4,whiteSpace:"nowrap"}}>✏️ Edit</button>);
+  const[exp,setExp]=useState({});const rp=members.filter(m=>m.isRootParent);
+  const tog=id=>setExp(p=>({...p,[id]:!p[id]}));
+  const expandAll=(parentId)=>{const all=getAllBranch(parentId,members);const newExp={...exp,[parentId]:true};all.forEach(m=>{if(getChildren(m.id,members).length>0)newExp[m.id]=true;});setExp(newExp);};
+  const collapseAll=(parentId)=>{const all=getAllBranch(parentId,members);const newExp={...exp};delete newExp[parentId];all.forEach(m=>delete newExp[m.id]);setExp(newExp);};
+
+  const eBtn=id=>(<button onClick={e=>{e.stopPropagation();goEdit(id);}} style={{background:"#E8F3DC",border:"1px solid #B8D4A0",borderRadius:4,padding:"2px 8px",cursor:"pointer",fontSize:11,color:"#2D5016",fontWeight:600,whiteSpace:"nowrap"}}>✏️ Edit</button>);
+
   const renderM=(m,depth=0)=>{const kids=getChildren(m.id,members);const isE=exp[m.id];return (<div key={m.id} style={{marginLeft:depth>0?16:0}}>
-    <div style={{padding:"7px 12px",borderBottom:"1px solid #F0EAE0",background:depth%2===0?"#FDFCF9":"#fff",display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
+    <div style={{padding:"7px 12px",borderBottom:"1px solid #F0EAE0",background:depth%2===0?"#FDFCF9":"#fff",display:"flex",alignItems:"center",gap:6}}>
+      {kids.length>0?<button onClick={()=>tog(m.id)} style={{background:"#E8F3DC",border:"1px solid #D4DFC8",borderRadius:6,padding:"3px 8px",cursor:"pointer",fontSize:12,color:"#4A7A28",fontWeight:700,flexShrink:0,minWidth:36,textAlign:"center"}}>{isE?"▾":"▸"} {kids.length}</button>:<div style={{minWidth:36}}/>}
       {m.isDeceased&&<HaloSVG size={13}/>}
-      <span style={{fontSize:13,fontWeight:depth===0?600:500,color:m.isDeceased?"#8B7355":"#1B3A0E"}}>{m.name}</span>
+      <span style={{fontSize:13,fontWeight:depth===0?600:500,color:m.isDeceased?"#8B7355":"#1B3A0E",flex:1}}>{m.name}</span>
       {m.age&&<span style={{fontSize:11,color:"#9A8B7A"}}>({m.age})</span>}
+      {m.spouse&&<span style={{fontSize:11,color:"#8B7355"}}>⚭ {m.spouse}</span>}
+      {m.state&&<span style={{fontSize:11,color:"#9A8B7A"}}>{m.city?`${m.city}, `:""}{m.state}</span>}
       {eBtn(m.id)}
-      {kids.length>0&&<button onClick={()=>tog(m.id)} style={{background:"#E8F3DC",border:"1px solid #D4DFC8",borderRadius:4,padding:"1px 6px",cursor:"pointer",fontSize:11,color:"#4A7A28",fontWeight:700,marginLeft:2}}>{isE?"▾":"▸"} {kids.length}</button>}
-      {m.spouse&&<span style={{fontSize:11,color:"#8B7355",marginLeft:4}}>⚭ {m.spouse}</span>}
-      {m.state&&<span style={{fontSize:11,color:"#9A8B7A",marginLeft:4}}>{m.city?`${m.city}, `:""}{m.state}</span>}
     </div>
     {isE&&kids.map(k=>renderM(k,depth+1))}
   </div>);};
+
   return (<div>
     <div style={{textAlign:"center",marginBottom:8}}><div style={{display:"inline-block",background:"linear-gradient(135deg,#2D5016,#4A7A28)",borderRadius:12,padding:"14px 28px",color:"#fff"}}><div style={{fontSize:10,textTransform:"uppercase",letterSpacing:"3px",opacity:.6,marginBottom:6}}>The Roots</div><div style={{display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}}>{rp.map(p=>(<div key={p.id} style={{display:"flex",alignItems:"center",gap:5}}><HaloSVG size={14}/><span style={{fontSize:15,fontWeight:700}}>{p.name}</span></div>))}</div></div></div>
     <div style={{width:4,height:24,background:"#8B7355",margin:"0 auto",borderRadius:2}}/>
     <div style={{background:"#E8F3DC",borderRadius:14,padding:"14px 12px",border:"2px solid #B8D4A0"}}>
       <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:"2px",color:"#4A7A28",textAlign:"center",marginBottom:12,fontWeight:700}}>The 13 Branches</div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
-        {rootChildren.map(c=>{const allD=getAllBranch(c.id,members);const dk=getChildren(c.id,members);const isE=exp[c.id];return (<div key={c.id} style={{background:"#fff",borderRadius:12,overflow:"hidden",border:c.isDeceased?"1px solid #D4C5AA":"1px solid #A8CF8A"}}>
-          <div style={{padding:"10px 12px",display:"flex",alignItems:"center",gap:6,background:c.isDeceased?"#FAF6EF":"#F5FAEF"}}>
-            <div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>{c.isDeceased&&<HaloSVG size={14}/>}<span style={{fontSize:14,fontWeight:600,color:c.isDeceased?"#7A6B5A":"#1B3A0E"}}>{c.name}</span>{eBtn(c.id)}</div>{c.spouse&&<div style={{fontSize:11,color:"#8B7355",marginTop:2}}>⚭ {c.spouse}</div>}{c.state&&<div style={{fontSize:11,color:"#9A8B7A"}}>{c.city?`${c.city}, `:""}{c.state}</div>}</div>
-            <button onClick={()=>tog(c.id)} style={{background:allD.length>0?"#E8F3DC":"#F5F0E5",border:"1px solid #D4DFC8",borderRadius:6,padding:"4px 8px",cursor:"pointer",fontSize:12,color:"#4A7A28",fontWeight:700,flexShrink:0}}>{isE?"▾":"▸"} {allD.length}</button>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:10}}>
+        {rootChildren.map(c=>{const allD=getAllBranch(c.id,members);const dk=getChildren(c.id,members);const isE=exp[c.id];const anyExpanded=allD.some(m=>exp[m.id]);return (<div key={c.id} style={{background:"#fff",borderRadius:12,overflow:"hidden",border:c.isDeceased?"1px solid #D4C5AA":"1px solid #A8CF8A"}}>
+          <div style={{padding:"10px 12px",display:"flex",alignItems:"center",gap:8,background:c.isDeceased?"#FAF6EF":"#F5FAEF"}}>
+            {/* Expand button — LEFT side, larger */}
+            <div style={{display:"flex",flexDirection:"column",gap:2,flexShrink:0}}>
+              <button onClick={()=>tog(c.id)} style={{background:allD.length>0?(isE?"#2D5016":"#E8F3DC"):"#F5F0E5",border:isE?"none":"1px solid #B8D4A0",borderRadius:8,padding:"6px 12px",cursor:"pointer",fontSize:14,color:isE?"#fff":"#2D5016",fontWeight:700,minWidth:52,textAlign:"center"}}>{isE?"▾":"▸"} {allD.length}</button>
+              {allD.length>1&&isE&&(<button onClick={()=>{if(anyExpanded)collapseAll(c.id);else expandAll(c.id);}} style={{background:"none",border:"none",cursor:"pointer",fontSize:10,color:"#4A7A28",fontWeight:600,padding:0,whiteSpace:"nowrap"}}>{anyExpanded?"Collapse all":"Expand all"}</button>)}
+            </div>
+            {/* Name & info — CENTER */}
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>{c.isDeceased&&<HaloSVG size={14}/>}<span style={{fontSize:14,fontWeight:600,color:c.isDeceased?"#7A6B5A":"#1B3A0E"}}>{c.name}</span></div>
+              {c.spouse&&<div style={{fontSize:11,color:"#8B7355",marginTop:2}}>⚭ {c.spouse}{c.spouseAge?` (${c.spouseAge})`:""}</div>}
+              {c.state&&<div style={{fontSize:11,color:"#9A8B7A"}}>{c.city?`${c.city}, `:""}{c.state}</div>}
+            </div>
+            {/* Edit button — RIGHT side */}
+            {eBtn(c.id)}
           </div>
           {isE&&<div style={{borderTop:"1px dashed #C8DFB0"}}>{dk.length===0&&<div style={{fontSize:12,color:"#B0A090",fontStyle:"italic",padding:12}}>No family added yet</div>}{dk.map(k=>renderM(k,0))}</div>}
         </div>);})}
@@ -365,7 +382,7 @@ function ListView({members,rootChildren,goEdit}){
 }
 
 /* ═══ FORM PAGE ═══ */
-function FormPage({members,rootChildren,addMember,updateMember,editTargetId,setEditTargetId}){
+function FormPage({members,rootChildren,addMember,updateMember,deleteMember,editTargetId,setEditTargetId}){
   const bl={name:"",age:"",birthMonth:"",city:"",state:"",spouse:"",spouseAge:"",spouseBirthMonth:"",spouseDeceased:false,phone:"",email:"",phone2:"",email2:"",isDeceased:false,isRootChild:false,parentId:"",childrenUnder18:[]};
   const[mode,setMode]=useState(editTargetId?"edit":"add");const[editId,setEditId]=useState(editTargetId||"");const[form,setForm]=useState(bl);const[added,setAdded]=useState([]);const[saveNote,setSaveNote]=useState("");
   const s=(k,v)=>setForm(p=>({...p,[k]:v}));
@@ -440,6 +457,16 @@ function FormPage({members,rootChildren,addMember,updateMember,editTargetId,setE
         </div>
 
         <button onClick={sub} style={{marginTop:20,padding:"14px 32px",background:mode==="edit"?"#C4963A":"#2D5016",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontSize:15,fontWeight:700,width:"100%"}}>{mode==="edit"?"Save Changes":"Add to Family Tree"}</button>
+
+        {mode==="edit"&&editId&&!form.isRootParent&&!form.isRootChild&&(
+          <button onClick={()=>{if(window.confirm(`Are you sure you want to permanently delete ${form.name}? This cannot be undone.`)){deleteMember(editId);setForm(bl);setEditId("");setSaveNote(`Deleted ${form.name}`);setTimeout(()=>setSaveNote(""),3000);}}}
+            style={{marginTop:10,padding:"12px 32px",background:"#fff",color:"#C33",border:"2px solid #E8AAAA",borderRadius:10,cursor:"pointer",fontSize:14,fontWeight:600,width:"100%"}}>
+            🗑 Delete This Member
+          </button>
+        )}
+        {mode==="edit"&&editId&&(form.isRootParent||form.isRootChild)&&(
+          <div style={{marginTop:10,padding:"10px 14px",background:"#F5E6E6",borderRadius:8,border:"1px solid #E0C8C8",fontSize:12,color:"#933",textAlign:"center"}}>Root family members cannot be deleted.</div>
+        )}
       </>)}
     </div>
     {saveNote&&<div style={{marginTop:12,background:"#FFF8EC",borderRadius:10,padding:14,border:"1px solid #E8DFD0",textAlign:"center"}}><span style={{fontSize:14,fontWeight:600,color:"#C4963A"}}>✓ {saveNote}</span></div>}
