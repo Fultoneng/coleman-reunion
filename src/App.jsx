@@ -1,5 +1,25 @@
 import { useState, useEffect, useCallback } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+
+/* ═══ FIREBASE CONFIG ═══ */
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+};
+
+let db = null;
+try {
+  if (firebaseConfig.apiKey) {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+  }
+} catch (e) { console.error("Firebase init error:", e); }
 
 const MONTHS=["January","February","March","April","May","June","July","August","September","October","November","December"];
 const US_STATES=["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC"];
@@ -43,26 +63,32 @@ function buildParentOpts(ms){return ms.filter(m=>m.isRootChild).map(r=>({root:r,
 function getDepth(m,ms){let d=0;let c=m;const v=new Set();while(c&&!c.isRootChild&&!v.has(c.id)){v.add(c.id);d++;c=ms.find(x=>x.id===c.parentId);}return d;}
 function HaloSVG({size=16}){return (<svg width={size} height={size*0.65} viewBox="0 0 24 15" style={{display:"inline-block",verticalAlign:"middle"}}><ellipse cx="12" cy="9" rx="9" ry="4" fill="none" stroke="#D4A843" strokeWidth="2.2" opacity="0.85"/><ellipse cx="12" cy="9" rx="9" ry="4" fill="none" stroke="#F5E6B8" strokeWidth="1" opacity="0.5"/></svg>);}
 
-/* ═══ STORAGE — works in Claude artifacts AND deployed sites ═══ */
+/* ═══ STORAGE — Firestore (shared) → localStorage (fallback) → artifact storage ═══ */
 const store = {
   async get(key) {
-    try {
-      if (typeof window !== 'undefined' && window.storage && window.storage.get) {
-        return await store.get(key);
-      }
-    } catch {}
+    // Try Firestore first (shared across all users)
+    if (db) {
+      try {
+        const snap = await getDoc(doc(db, "appData", key));
+        if (snap.exists()) return { value: snap.data().value };
+      } catch (e) { console.warn("Firestore read error:", e); }
+    }
+    // Fallback to localStorage (per-device)
     try {
       const v = localStorage.getItem(key);
       return v !== null ? { value: v } : null;
     } catch { return null; }
   },
   async set(key, value) {
-    try {
-      if (typeof window !== 'undefined' && window.storage && window.storage.set) {
-        return await store.set(key, value);
-      }
-    } catch {}
-    try { localStorage.setItem(key, value); return { key, value }; } catch { return null; }
+    // Write to Firestore (shared across all users)
+    if (db) {
+      try {
+        await setDoc(doc(db, "appData", key), { value, updatedAt: new Date().toISOString() });
+      } catch (e) { console.warn("Firestore write error:", e); }
+    }
+    // Also write to localStorage as backup
+    try { localStorage.setItem(key, value); } catch {}
+    return { key, value };
   }
 };
 
@@ -123,7 +149,76 @@ function AppContent(){
   const[saveMsg,setSaveMsg]=useState("");
   const[showHelp,setShowHelp]=useState(false);
 
-  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-v8");if(r?.value){const p=JSON.parse(r.value);if(Array.isArray(p)&&p.length>0)setMembers(p);}}catch(e){console.error("Load error:",e);}setLoaded(true);})();},[]);
+  useEffect(()=>{(async()=>{try{
+    // Load from Firebase (shared)
+    let fbMembers = null;
+    if(db){try{const snap=await getDoc(doc(db,"appData","coleman-v8"));if(snap.exists())fbMembers=JSON.parse(snap.data().value);}catch(e){console.warn("Firebase read:",e);}}
+
+    // Load from localStorage (this device only)
+    let localMembers = null;
+    try{const v=localStorage.getItem("coleman-v8");if(v)localMembers=JSON.parse(v);}catch{}
+
+    // Merge: start with Firebase data, add any local-only members
+    if(fbMembers && Array.isArray(fbMembers) && fbMembers.length > 0){
+      let merged = [...fbMembers];
+      if(localMembers && Array.isArray(localMembers)){
+        const fbNames = new Set(fbMembers.map(m=>(m.name||"").trim().toLowerCase()));
+        const fbIds = new Set(fbMembers.map(m=>m.id));
+        localMembers.forEach(lm=>{
+          const nameKey = (lm.name||"").trim().toLowerCase();
+          // Add if not a duplicate by name or ID, and not a root parent/child already in Firebase
+          if(!fbIds.has(lm.id) && !fbNames.has(nameKey) && !lm.isRootParent && !lm.isRootChild){
+            merged.push(lm);
+          } else if(fbIds.has(lm.id) && !lm.isRootParent){
+            // Same ID exists — keep Firebase version but merge in any fields localStorage has that Firebase doesn't
+            merged = merged.map(fm=>{
+              if(fm.id !== lm.id) return fm;
+              return {...fm,
+                phone:fm.phone||lm.phone||"",email:fm.email||lm.email||"",
+                phone2:fm.phone2||lm.phone2||"",email2:fm.email2||lm.email2||"",
+                spouseAge:fm.spouseAge||lm.spouseAge||"",spouseBirthMonth:fm.spouseBirthMonth||lm.spouseBirthMonth||"",
+                city:fm.city||lm.city||"",state:fm.state||lm.state||"",
+                age:fm.age||lm.age||"",birthMonth:fm.birthMonth||lm.birthMonth||""
+              };
+            });
+          }
+        });
+      }
+      setMembers(merged);
+      // Save merged result back to Firebase
+      if(merged.length > fbMembers.length){
+        try{await setDoc(doc(db,"appData","coleman-v8"),{value:JSON.stringify(merged),updatedAt:new Date().toISOString()});}catch{}
+      }
+    } else if(localMembers && Array.isArray(localMembers) && localMembers.length > 0){
+      // No Firebase data yet — push localStorage up as the starting point
+      setMembers(localMembers);
+      if(db){try{await setDoc(doc(db,"appData","coleman-v8"),{value:JSON.stringify(localMembers),updatedAt:new Date().toISOString()});}catch{}}
+    }
+
+    // Also merge other storage keys (rsvps, roles, votes, budget, guests)
+    const mergeKeys = ["coleman-rsvp","coleman-roles-v2","coleman-first-vote","coleman-budget","coleman-guests"];
+    for(const key of mergeKeys){
+      if(!db) break;
+      try{
+        const snap = await getDoc(doc(db,"appData",key));
+        const localVal = localStorage.getItem(key);
+        if(!snap.exists() && localVal){
+          // Local has data, Firebase doesn't — push up
+          await setDoc(doc(db,"appData",key),{value:localVal,updatedAt:new Date().toISOString()});
+        } else if(snap.exists() && localVal){
+          // Both have data — merge objects (for rsvps, roles, guests, etc.)
+          try{
+            const fbObj = JSON.parse(snap.data().value);
+            const localObj = JSON.parse(localVal);
+            if(typeof fbObj === "object" && typeof localObj === "object" && !Array.isArray(fbObj)){
+              const merged = {...localObj,...fbObj}; // Firebase wins on conflicts
+              await setDoc(doc(db,"appData",key),{value:JSON.stringify(merged),updatedAt:new Date().toISOString()});
+            }
+          }catch{}
+        }
+      }catch(e){console.warn("Merge key",key,e);}
+    }
+  }catch(e){console.error("Load error:",e);}setLoaded(true);})();},[]);
   const saveData=useCallback(async(data)=>{try{await store.set("coleman-v8",JSON.stringify(data));setSaveMsg("Saved");setTimeout(()=>setSaveMsg(""),1500);}catch{}},[]);
   const updateMember=(id,u)=>{const n=members.map(m=>m.id===id?{...m,...u}:m);setMembers(n);saveData(n);};
   const addMember=(member)=>{const rb=findRootBranch(member.parentId,members)||member.parentId;const n=[...members,{...member,id:genId(),parentRootId:rb}];setMembers(n);saveData(n);};
