@@ -749,12 +749,11 @@ function AttendancePage({members,rootChildren,updateMember}){
     <div style={{display:"flex",flexDirection:"column",gap:8}}>
       {rootChildren.map(rc=>{
         const branchMembers = [rc,...getAllBranch(rc.id,members)].filter(m=>!m.isDeceased);
-        if(branchMembers.length===0) return null;
         const branchGuests = branchMembers.reduce((a,m)=>a+(guests[m.id]||[]).length,0);
         return (<div key={rc.id} style={{background:"#fff",borderRadius:12,border:"1px solid #C8DFB0",overflow:"hidden"}}>
-          <div style={{padding:"8px 14px",background:"#F5FAEF",fontSize:13,fontWeight:700,color:"#2D5016",borderBottom:"1px solid #D4DFC8"}}>
-            {rc.name.split(/[\s(]/)[0]}'s Family
-            <span style={{fontWeight:400,color:"#7A6B5A",marginLeft:8}}>({branchMembers.filter(m=>rsvps[m.id]==="going").length} going{branchGuests>0?` + ${branchGuests} guest${branchGuests===1?"":"s"}` :""})</span>
+          <div style={{padding:"8px 14px",background:"#F5FAEF",fontSize:13,fontWeight:700,color:"#2D5016",borderBottom:"1px solid #D4DFC8",display:"flex",alignItems:"center",gap:4}}>
+            {rc.isDeceased&&<HaloSVG size={12}/>}{rc.name.split(/[\s(]/)[0]}'s Family
+            <span style={{fontWeight:400,color:"#7A6B5A",marginLeft:8}}>{branchMembers.length>0?`(${branchMembers.filter(m=>rsvps[m.id]==="going").length} going${branchGuests>0?` + ${branchGuests} guest${branchGuests===1?"":"s"}`:""})`:"(no living members registered)"}</span>
           </div>
           {branchMembers.map((m,mi)=>{
             const status = rsvps[m.id]||"";
