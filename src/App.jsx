@@ -38,8 +38,8 @@ const COST_ESTIMATES={
 };
 
 const INITIAL_MEMBERS=[
-  {id:"root-1",name:"Aurthur Coleman",age:"",birthMonth:"",city:"Indianapolis",state:"IN",phone:"",email:"",isRootParent:true,isRootChild:false,isDeceased:true,parentId:null,parentRootId:null,spouse:"Orma Ree",childrenUnder18:[]},
-  {id:"root-2",name:"Orma Ree Coleman",age:"",birthMonth:"",city:"Indianapolis",state:"IN",phone:"",email:"",isRootParent:true,isRootChild:false,isDeceased:true,parentId:null,parentRootId:null,spouse:"Aurthur Coleman",childrenUnder18:[]},
+  {id:"root-1",name:"Arthur Coleman",age:"",birthMonth:"",city:"Indianapolis",state:"IN",phone:"",email:"",isRootParent:true,isRootChild:false,isDeceased:true,parentId:null,parentRootId:null,spouse:"Orma Ree",childrenUnder18:[]},
+  {id:"root-2",name:"Orma Ree Coleman",age:"",birthMonth:"",city:"Indianapolis",state:"IN",phone:"",email:"",isRootParent:true,isRootChild:false,isDeceased:true,parentId:null,parentRootId:null,spouse:"Arthur Coleman",childrenUnder18:[]},
   {id:"child-01",name:"Doris (Thompson) Stigger",age:"",birthMonth:"",city:"",state:"",phone:"",email:"",isRootParent:false,isRootChild:true,isDeceased:true,parentId:"root",parentRootId:"child-01",spouse:"",childrenUnder18:[]},
   {id:"child-02",name:"Samuel Thompson Jr",age:"",birthMonth:"",city:"",state:"",phone:"",email:"",isRootParent:false,isRootChild:true,isDeceased:true,parentId:"root",parentRootId:"child-02",spouse:"",childrenUnder18:[]},
   {id:"child-03",name:"Luther Coleman",age:"",birthMonth:"",city:"",state:"",phone:"",email:"",isRootParent:false,isRootChild:true,isDeceased:true,parentId:"root",parentRootId:"child-03",spouse:"",childrenUnder18:[]},
@@ -93,7 +93,7 @@ const store = {
 };
 
 /* ═══ FAMILY PASSKEY — change this to update the passkey ═══ */
-const FAMILY_PASSKEY = "Aurthur_OrmaRee_13";
+const FAMILY_PASSKEY = "Arthur_OrmaRee_13";
 
 /* ═══ MAIN APP — auth wrapper only ═══ */
 export default function ColemanReunion(){
@@ -119,7 +119,7 @@ export default function ColemanReunion(){
       <div style={{maxWidth:420,width:"100%",textAlign:"center"}}>
         <div style={{fontSize:80,marginBottom:10,filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.3))"}}>🌳</div>
         <h1 style={{fontFamily:"Georgia,serif",color:"#fff",fontSize:"clamp(24px,5vw,36px)",margin:"0 0 6px",fontWeight:700,textShadow:"0 2px 8px rgba(0,0,0,0.3)"}}>The Coleman Family Reunion</h1>
-        <p style={{color:"rgba(255,255,255,0.7)",fontSize:14,fontStyle:"italic",margin:"0 0 30px"}}>Rooted in Indianapolis — Founded by Aurthur Coleman & Orma Ree</p>
+        <p style={{color:"rgba(255,255,255,0.7)",fontSize:14,fontStyle:"italic",margin:"0 0 30px"}}>Rooted in Indianapolis — Founded by Arthur Coleman & Orma Ree</p>
         <div style={{background:"rgba(255,255,255,0.1)",backdropFilter:"blur(10px)",borderRadius:16,padding:28,border:"1px solid rgba(255,255,255,0.15)"}}>
           <div style={{fontSize:15,color:"#fff",fontWeight:600,marginBottom:4}}>Family Access</div>
           <p style={{fontSize:13,color:"rgba(255,255,255,0.6)",margin:"0 0 16px"}}>Enter the family passkey to continue</p>
@@ -235,7 +235,7 @@ function AppContent(){
       <div style={{background:"linear-gradient(135deg,#2D5016 0%,#3A7D1E 50%,#2D5016 100%)",padding:"16px 20px 10px",color:"#fff",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:-10,right:20,opacity:0.08,fontSize:100}}>🌳</div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",position:"relative"}}>
-          <div><h1 style={{fontFamily:"Georgia,serif",fontSize:"clamp(18px,4vw,28px)",margin:0,fontWeight:700}}>The Coleman Family Reunion</h1><p style={{margin:"2px 0 10px",opacity:0.8,fontSize:13,fontStyle:"italic"}}>Rooted in Indianapolis — Founded by Aurthur Coleman & Orma Ree</p></div>
+          <div><h1 style={{fontFamily:"Georgia,serif",fontSize:"clamp(18px,4vw,28px)",margin:0,fontWeight:700}}>The Coleman Family Reunion</h1><p style={{margin:"2px 0 10px",opacity:0.8,fontSize:13,fontStyle:"italic"}}>Rooted in Indianapolis — Founded by Arthur Coleman & Orma Ree</p></div>
           <button onClick={()=>setShowHelp(!showHelp)} style={{background:"rgba(255,255,255,0.2)",border:"1px solid rgba(255,255,255,0.4)",borderRadius:"50%",width:30,height:30,cursor:"pointer",fontSize:15,color:"#fff",fontWeight:700,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}} title="Help">?</button>
         </div>
         {/* Welcome action banner */}
@@ -267,7 +267,7 @@ function AppContent(){
       {saveMsg&&<div style={{background:"#C4963A",color:"#fff",textAlign:"center",padding:"3px",fontSize:12,fontWeight:600}}>{saveMsg}</div>}
       <div style={{maxWidth:1200,margin:"0 auto",padding:"16px 14px"}}>
         {page==="tree"&&<TreeWrapper members={members} rootChildren={rootChildren} goEdit={goEdit}/>}
-        {page==="form"&&<FormPage members={members} rootChildren={rootChildren} addMember={addMember} updateMember={updateMember} deleteMember={deleteMember} editTargetId={editTargetId} setEditTargetId={setEditTargetId}/>}
+        {page==="form"&&<FormPage members={members} rootChildren={rootChildren} addMember={addMember} updateMember={updateMember} deleteMember={deleteMember} editTargetId={editTargetId} setEditTargetId={setEditTargetId} setPage={setPage}/>}
         {page==="map"&&<MapPage members={members}/>}
         {page==="bylaws"&&<ByLawsPage rootChildren={rootChildren}/>}
         {page==="reunion"&&<ReunionPage/>}
@@ -282,12 +282,12 @@ function AppContent(){
 /* ═══ SHARED COMPONENTS ═══ */
 function ParentSelector({members,value,onChange,label}){const gs=buildParentOpts(members);const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};return (<div><label style={{display:"block",fontSize:12,fontWeight:600,color:"#4A7A28",marginBottom:4,marginTop:14}}>{label||"Parent"}</label><select style={is} value={value} onChange={e=>onChange(e.target.value)}><option value="">Select parent…</option>{gs.map(g=>(<optgroup key={g.root.id} label={`${g.root.name}${g.root.isDeceased?" ✝":""}`}><option value={g.root.id}>↳ Child of {g.root.name.split(/[\s(]/)[0]}</option>{g.desc.map(d=>{const indent="— ".repeat(getDepth(d,members)-1);return <option key={d.id} value={d.id}>{indent}↳ Child of {d.name}</option>;})}</optgroup>))}</select></div>);}
 
-function ChildrenU18({children,onChange}){const[cn,setCn]=useState("");const[ca,setCa]=useState("");const[cb,setCb]=useState("");const[cd,setCd]=useState(false);const add=()=>{if(!cn.trim())return;onChange([...(children||[]),{name:cn,age:ca,birthMonth:cb,deceased:cd}]);setCn("");setCa("");setCb("");setCd(false);};const is={width:"100%",padding:"8px 10px",border:"1px solid #C8DFB0",borderRadius:6,fontSize:13,background:"#fff",boxSizing:"border-box"};return(<div style={{marginTop:0,padding:14,background:"#F5FAEF",borderRadius:10,border:"1px solid #C8DFB0"}}><div style={{fontSize:13,fontWeight:700,color:"#4A7A28",marginBottom:8}}>Children Under 18</div>{(children||[]).map((c,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,fontSize:13,padding:"8px 10px",background:"#fff",borderRadius:6,border:"1px solid #E8DFD0"}}><div style={{flex:1}}><div style={{fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{c.deceased&&<HaloSVG size={12}/>}{c.name}</div><div style={{fontSize:11,color:"#8B7355"}}>{c.age&&`Age ${c.age}`}{c.age&&c.birthMonth&&" · "}{c.birthMonth&&`Born ${c.birthMonth}`}{c.deceased&&" · Passed away"}</div></div><button onClick={()=>onChange(children.filter((_,x)=>x!==i))} style={{background:"none",border:"none",color:"#C77",cursor:"pointer",fontSize:12}}>✕</button></div>))}<div style={{display:"grid",gridTemplateColumns:"3fr 1fr 2fr auto",gap:6,marginTop:8,alignItems:"end"}}><div><label style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Name</label><input placeholder="Child's name" value={cn} onChange={e=>setCn(e.target.value)} style={is}/></div><div><label style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Age</label><input placeholder="Age" type="number" value={ca} onChange={e=>setCa(e.target.value)} style={is}/></div><div><label style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Birth Month</label><select value={cb} onChange={e=>setCb(e.target.value)} style={is}><option value="">Select…</option>{MONTHS.map(m=><option key={m}>{m}</option>)}</select></div><div style={{paddingBottom:2}}><label style={{display:"flex",alignItems:"center",gap:4,fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}><input type="checkbox" checked={cd} onChange={e=>setCd(e.target.checked)} style={{accentColor:"#D4A843"}}/>Passed</label></div></div><button onClick={add} style={{marginTop:10,padding:"8px 16px",background:"#4A7A28",color:"#fff",border:"none",borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:600,width:"100%"}}>+ Add Child</button></div>);}
+function ChildrenU18({children,onChange}){const[cn,setCn]=useState("");const[ca,setCa]=useState("");const[cb,setCb]=useState("");const[cd,setCd]=useState(false);const[err,setErr]=useState("");const add=()=>{if(!cn.trim())return;const ageNum=parseInt(ca);if(ca&&!isNaN(ageNum)&&ageNum>=18){setErr("Children 18 and older should fill out their own Member form using the \"+ Add New\" button.");return;}setErr("");onChange([...(children||[]),{name:cn,age:ca,birthMonth:cb,deceased:cd}]);setCn("");setCa("");setCb("");setCd(false);};const is={width:"100%",padding:"8px 10px",border:"1px solid #C8DFB0",borderRadius:6,fontSize:13,background:"#fff",boxSizing:"border-box"};return(<div style={{marginTop:0,padding:14,background:"#F5FAEF",borderRadius:10,border:"1px solid #C8DFB0"}}><div style={{fontSize:13,fontWeight:700,color:"#4A7A28",marginBottom:8}}>Children Under 18</div>{(children||[]).map((c,i)=>(<div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,fontSize:13,padding:"8px 10px",background:"#fff",borderRadius:6,border:"1px solid #E8DFD0"}}><div style={{flex:1}}><div style={{fontWeight:500,display:"flex",alignItems:"center",gap:4}}>{c.deceased&&<HaloSVG size={12}/>}{c.name}</div><div style={{fontSize:11,color:"#8B7355"}}>{c.age&&`Age ${c.age}`}{c.age&&c.birthMonth&&" · "}{c.birthMonth&&`Born ${c.birthMonth}`}{c.deceased&&" · Passed away"}</div></div><button onClick={()=>onChange(children.filter((_,x)=>x!==i))} style={{background:"none",border:"none",color:"#C77",cursor:"pointer",fontSize:12}}>✕</button></div>))}<div style={{display:"grid",gridTemplateColumns:"3fr 1fr 2fr auto",gap:6,marginTop:8,alignItems:"end"}}><div><label style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Name</label><input placeholder="Child's name" value={cn} onChange={e=>setCn(e.target.value)} style={is}/></div><div><label style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Age</label><input placeholder="Age" type="number" value={ca} onChange={e=>{setCa(e.target.value);setErr("");}} max="17" style={is}/></div><div><label style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Birth Month</label><select value={cb} onChange={e=>setCb(e.target.value)} style={is}><option value="">Select…</option>{MONTHS.map(m=><option key={m}>{m}</option>)}</select></div><div style={{paddingBottom:2}}><label style={{display:"flex",alignItems:"center",gap:4,fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}><input type="checkbox" checked={cd} onChange={e=>setCd(e.target.checked)} style={{accentColor:"#D4A843"}}/>Passed</label></div></div>{err&&<div style={{marginTop:8,padding:"8px 12px",background:"#FFF8EC",borderRadius:6,border:"1px solid #E8DFD0",fontSize:12,color:"#C4963A",fontWeight:500}}>{err}</div>}<button onClick={add} style={{marginTop:10,padding:"8px 16px",background:"#4A7A28",color:"#fff",border:"none",borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:600,width:"100%"}}>+ Add Child</button></div>);}
 
 /* ═══ TREE WRAPPER ═══ */
-function TreeWrapper({members,rootChildren,goEdit}){const[view,setView]=useState("list");return(<div>
+function TreeWrapper({members,rootChildren,goEdit}){const[view,setView]=useState("tree");return(<div>
   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
-    <p style={{color:"#7A6B5A",fontSize:13,margin:0}}>Click any name to edit. Golden halo = passed away.</p>
+    <p style={{color:"#7A6B5A",fontSize:13,margin:0}}>Click a branch to focus. Click a leaf to see details. Golden halo = passed away.</p>
     <div style={{display:"flex",background:"#E8F3DC",borderRadius:8,overflow:"hidden",border:"1px solid #B8D4A0"}}>
       <button onClick={()=>setView("tree")} style={{padding:"6px 12px",border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:view==="tree"?"#2D5016":"transparent",color:view==="tree"?"#fff":"#2D5016"}}>🌳 Oak Tree</button>
       <button onClick={()=>setView("list")} style={{padding:"6px 12px",border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:view==="list"?"#2D5016":"transparent",color:view==="list"?"#fff":"#2D5016"}}>📋 List</button>
@@ -296,48 +296,112 @@ function TreeWrapper({members,rootChildren,goEdit}){const[view,setView]=useState
   {view==="tree"?<OakTree members={members} rootChildren={rootChildren} goEdit={goEdit}/>:<ListView members={members} rootChildren={rootChildren} goEdit={goEdit}/>}
 </div>);}
 
-/* ═══ OAK TREE — click leaf → edit ═══ */
+/* ═══ OAK TREE — real image with interactive overlay ═══ */
 function OakTree({members,rootChildren,goEdit}){
-  const[zoom,setZoom]=useState(0.85);const[pan,setPan]=useState({x:0,y:0});const[dr,setDr]=useState(false);const[ds,setDs]=useState({x:0,y:0});
-  const md=e=>{if(e.target.closest('.ln'))return;setDr(true);setDs({x:e.clientX-pan.x,y:e.clientY-pan.y});};
-  const mm=e=>{if(dr)setPan({x:e.clientX-ds.x,y:e.clientY-ds.y});};const mu=()=>setDr(false);
-  const ts=e=>{if(e.target.closest('.ln'))return;const t=e.touches[0];setDr(true);setDs({x:t.clientX-pan.x,y:t.clientY-pan.y});};
-  const tm=e=>{if(dr){const t=e.touches[0];setPan({x:t.clientX-ds.x,y:t.clientY-ds.y});}};
-  const ol="M0,-7 C1.5,-6 3,-4.5 3.5,-3 C5,-3.5 6,-2 5,0 C6.5,0.5 6,2.5 4.5,3 C5,4.5 3.5,5.5 2,4.5 C1,6 -1,6 -2,4.5 C-3.5,5.5 -5,4.5 -4.5,3 C-6,2.5 -6.5,0.5 -5,0 C-6,-2 -5,-3.5 -3.5,-3 C-3,-4.5 -1.5,-6 0,-7Z";
-  const zB={padding:"6px 12px",background:"#fff",border:"1px solid #B8D4A0",borderRadius:6,cursor:"pointer",fontSize:16,fontWeight:700,color:"#2D5016",lineHeight:1};
-  return (<div>
-    <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:10,justifyContent:"flex-end"}}><button onClick={()=>setZoom(z=>Math.max(0.3,z-0.15))} style={zB}>−</button><span style={{fontSize:12,color:"#7A6B5A",minWidth:40,textAlign:"center"}}>{Math.round(zoom*100)}%</span><button onClick={()=>setZoom(z=>Math.min(2.5,z+0.15))} style={zB}>+</button><button onClick={()=>{setZoom(0.85);setPan({x:0,y:0});}} style={{...zB,fontSize:11,padding:"6px 10px"}}>Reset</button></div>
-    <div onMouseDown={md} onMouseMove={mm} onMouseUp={mu} onMouseLeave={mu} onTouchStart={ts} onTouchMove={tm} onTouchEnd={mu} style={{background:"linear-gradient(180deg,#D4ECFA 0%,#A8D8EA 15%,#E8F3DC 40%,#C5DFA8 100%)",borderRadius:16,overflow:"hidden",cursor:dr?"grabbing":"grab",border:"2px solid #B8D4A0",height:"clamp(500px,70vh,800px)"}}>
-      <div style={{transform:`translate(${pan.x}px,${pan.y}px) scale(${zoom})`,transformOrigin:"center center",transition:dr?"none":"transform 0.2s",width:"100%",height:"100%"}}>
-        <svg viewBox="0 0 1400 1050" style={{width:"100%",height:"100%"}}>
-          <defs><linearGradient id="tG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#5C3D1E"/><stop offset="30%" stopColor="#7A5A36"/><stop offset="70%" stopColor="#6B4C2A"/><stop offset="100%" stopColor="#4A3018"/></linearGradient><linearGradient id="cG" x1=".5" y1="0" x2=".5" y2="1"><stop offset="0%" stopColor="#5DA832"/><stop offset="50%" stopColor="#4A8C28"/><stop offset="100%" stopColor="#3A7020"/></linearGradient><radialGradient id="cL" cx=".4" cy=".3"><stop offset="0%" stopColor="#8CD660" stopOpacity=".4"/><stop offset="100%" stopColor="#4A8C28" stopOpacity="0"/></radialGradient><filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity=".15"/></filter><linearGradient id="gG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#F5E6B8"/><stop offset="50%" stopColor="#D4A843"/><stop offset="100%" stopColor="#C49030"/></linearGradient></defs>
-          <ellipse cx="700" cy="1010" rx="600" ry="60" fill="#8B7355" opacity=".25"/>
-          <g stroke="#5C3D1E" strokeWidth="6" fill="none" strokeLinecap="round" opacity=".5"><path d="M660,950 Q580,980 500,990 Q440,995 400,980"/><path d="M680,955 Q620,1000 560,1010"/><path d="M740,950 Q820,980 900,990 Q960,995 1000,980"/><path d="M720,955 Q780,1000 840,1010"/><path d="M700,960 Q700,990 695,1010"/></g>
-          <path d="M660,950 Q650,800 640,700 Q635,650 660,600 Q680,570 700,560 Q720,570 740,600 Q765,650 760,700 Q750,800 740,950Z" fill="url(#tG)"/>
-          <g stroke="#6B4C2A" fill="none" strokeLinecap="round">{rootChildren.map((c,i)=>{const b=BRANCHES[i];return <path key={c.id} d={`M700,580 Q${b.cx},${b.cy} ${b.x},${b.y}`} strokeWidth={8-i*.3} opacity=".7"/>;})}</g>
-          <path d="M700,50 C900,30 1100,80 1250,180 C1350,250 1380,380 1300,480 C1250,550 1180,590 1100,600 C1050,610 950,640 850,650 Q770,660 700,660 Q630,660 550,650 C450,640 350,610 300,600 C220,590 150,550 100,480 C20,380 50,250 150,180 C300,80 500,30 700,50Z" fill="url(#cG)" opacity=".35"/>
-          <path d="M700,50 C900,30 1100,80 1250,180 C1350,250 1380,380 1300,480 C1250,550 1180,590 1100,600 C1050,610 950,640 850,650 Q770,660 700,660 Q630,660 550,650 C450,640 350,610 300,600 C220,590 150,550 100,480 C20,380 50,250 150,180 C300,80 500,30 700,50Z" fill="url(#cL)"/>
-          {Array.from({length:80}).map((_,i)=>{const a=(i/80)*Math.PI*2;const r=180+Math.sin(i*7)*120+Math.cos(i*3)*80;const lx=700+Math.cos(a)*r*.9;const ly=370+Math.sin(a)*r*.5-30;if(ly>640||ly<40||lx<90||lx>1310)return null;return <path key={`b${i}`} d={ol} transform={`translate(${lx},${ly}) scale(${.5+Math.random()*.3}) rotate(${Math.sin(i*5)*30})`} fill={i%7===0?"#6BBF3A":"#4A8C28"} opacity={.12+Math.sin(i*3)*.06}/>;
+  const[selBranch,setSelBranch]=useState(null);
+  const[selPerson,setSelPerson]=useState(null);
+  const[search,setSearch]=useState("");
+
+  const searchMatch = search.trim().toLowerCase();
+  const foundMember = searchMatch ? members.find(m=>(m.name||"").toLowerCase().includes(searchMatch)) : null;
+  const foundBranch = foundMember ? (foundMember.isRootChild ? foundMember.id : foundMember.parentRootId || findRootBranch(foundMember.parentId,members)) : null;
+  useEffect(()=>{if(foundBranch && search.trim())setSelBranch(foundBranch);},[foundBranch,search]);
+
+  const clickBranch=(id)=>{ setSelBranch(selBranch===id?null:id); setSelPerson(null); setSearch(""); };
+  const clickPerson=(m)=>{ setSelPerson(selPerson?.id===m.id?null:m); };
+
+  // 13 branch positions for wide Coleman oak tree
+  // Order: Doris, Samuel, Luther, Sammie, Shirley, Paulette, Norma, Jackie, Arlene, Arthur Jr, Charles, Kevin, Evan
+  const bp = [
+    [35,6],   // 0 Doris — top left crown
+    [50,3],   // 1 Samuel — top center
+    [65,6],   // 2 Luther — top right crown
+    [22,15],  // 3 Sammie — upper left
+    [78,15],  // 4 Shirley — upper right
+    [12,27],  // 5 Paulette — left canopy
+    [88,27],  // 6 Norma — right canopy
+    [5,40],   // 7 Jackie — far left branch
+    [95,40],  // 8 Arlene — far right branch
+    [10,52],  // 9 Arthur Jr — lower left
+    [90,52],  // 10 Charles — lower right
+    [18,62],  // 11 Kevin — bottom left
+    [82,62],  // 12 Evan — bottom right
+  ];
+
+  const pq=(isD,isA)=>({
+    padding:"4px 10px",borderRadius:14,fontSize:isA?13:11,fontWeight:700,
+    cursor:"pointer",whiteSpace:"nowrap",userSelect:"none",
+    background:isD?"rgba(196,150,58,.92)":"rgba(27,58,14,.92)",
+    color:"#fff",border:isA?"2px solid #fff":"2px solid transparent",
+    boxShadow:isA?"0 0 16px rgba(255,255,255,.5)":"0 2px 6px rgba(0,0,0,.3)",
+    transform:isA?"scale(1.15)":"scale(1)",transition:"all .3s ease",
+    display:"inline-flex",alignItems:"center",gap:4,
+  });
+
+  return (<div style={{position:"relative"}}>
+    <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
+      <button onClick={()=>{setSelBranch(null);setSelPerson(null);setSearch("");}} style={{padding:"6px 14px",background:!selBranch?"#2D5016":"#E8F3DC",color:!selBranch?"#fff":"#2D5016",border:"1px solid #B8D4A0",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>🌳 All Family</button>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name..." style={{padding:"6px 12px",border:"1px solid #C8DFB0",borderRadius:6,fontSize:13,background:"#fff",minWidth:160,flex:1,maxWidth:250}}/>
+      {search&&foundMember&&<span style={{fontSize:11,color:"#4A7A28",fontWeight:600}}>Found: {foundMember.name}</span>}
+      {search&&!foundMember&&search.length>1&&<span style={{fontSize:11,color:"#C4963A"}}>No match</span>}
+    </div>
+    <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+      <div style={{flex:1,minWidth:300,position:"relative"}}>
+        <div style={{position:"relative",borderRadius:16,overflow:"hidden",border:"2px solid #B8D4A0",background:"#FAF7F2"}}>
+          <img src="/oak-tree.jpg" alt="Coleman Family Tree" style={{width:"100%",display:"block",pointerEvents:"none"}}/>
+
+          {rootChildren.map((c,i)=>{
+            const pos=bp[i]||[50,50];const descendants=getAllBranch(c.id,members);const fn=c.name.split(/[\s(]/)[0];
+            const isActive=selBranch===c.id;const isFaded=selBranch&&!isActive;
+            return (<div key={c.id} style={{position:"absolute",left:`${pos[0]}%`,top:`${pos[1]}%`,transform:"translate(-50%,-50%)",zIndex:isActive?10:5,opacity:isFaded?0.3:1,transition:"all .3s ease"}}>
+              {isActive&&descendants.filter(d=>!d.isDeceased).map((d,di)=>{
+                const angle=((di-descendants.length/2)*35)*Math.PI/180;const dist=50+di*12;
+                const lx=Math.cos(angle)*dist;const ly=-Math.abs(Math.sin(angle)*dist)-30;
+                const isF=foundMember&&d.id===foundMember.id;const isS=selPerson?.id===d.id;
+                return (<div key={d.id} onClick={(e)=>{e.stopPropagation();clickPerson(d);}}
+                  style={{position:"absolute",left:lx,top:ly,transform:"translate(-50%,-50%)",
+                    padding:"3px 8px",borderRadius:10,fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",zIndex:6,
+                    background:isF||isS?"#C4963A":d.isDeceased?"rgba(180,140,60,.9)":"rgba(45,80,22,.88)",
+                    color:"#fff",border:isS?"2px solid #fff":"1px solid rgba(255,255,255,.3)",
+                    boxShadow:"0 2px 6px rgba(0,0,0,.25)",transition:"all .2s"}}>
+                  {d.name.split(" ")[0]}
+                </div>);
+              })}
+              <div onClick={()=>clickBranch(c.id)} style={pq(c.isDeceased,isActive)}>
+                {c.isDeceased&&<HaloSVG size={11}/>}{fn}
+                {descendants.length>0&&<span style={{background:"rgba(255,255,255,.25)",borderRadius:8,padding:"1px 5px",fontSize:9,marginLeft:2}}>{descendants.length}</span>}
+              </div>
+            </div>);
           })}
-          {rootChildren.map((c,i)=>{const b=BRANCHES[i];const ds=getAllBranch(c.id,members);const fn=c.name.split(/[\s(]/)[0];const lW=Math.max(60,fn.length*7+24);
-            return (<g key={c.id} className="ln" style={{cursor:"pointer"}} onClick={()=>goEdit(c.id)}>
-              <path d={ol} transform={`translate(${b.x},${b.y}) scale(1.8)`} fill={c.isDeceased?"url(#gG)":"#1B3A0E"} filter="url(#sh)"/>
-              <circle cx={b.x} cy={b.y} r="20" fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="1" strokeDasharray="3,3"/>
-              <rect x={b.x-lW/2} y={b.y+16} width={lW} height="18" rx="9" fill={c.isDeceased?"rgba(180,140,60,.85)":"rgba(27,58,14,.92)"}/>
-              <text x={b.x+(c.isDeceased?5:0)} y={b.y+29} textAnchor="middle" fill="#fff" fontSize="10" fontWeight="600" fontFamily="Segoe UI,sans-serif">{fn}</text>
-              {c.isDeceased&&<ellipse cx={b.x-lW/2+9} cy={b.y+25} rx="6" ry="3" fill="none" stroke="#F5E6B8" strokeWidth="1.5" opacity=".9"/>}
-              {ds.length>0&&<><circle cx={b.x+22} cy={b.y-10} r="9" fill="#2D5016" stroke="#fff" strokeWidth="1"/><text x={b.x+22} y={b.y-6} textAnchor="middle" fill="#fff" fontSize="9" fontWeight="700">{ds.length}</text></>}
-            </g>);})}
-          {rootChildren.map((c,i)=>{const b=BRANCHES[i];return getAllBranch(c.id,members).map((d,di)=>{const a=((di-getAllBranch(c.id,members).length/2)*.7);const dist=40+di*20;const dx=b.x+Math.cos(a-.3)*dist*(b.x<700?-.8:.8);const dy=b.y-25-di*18;const fn=d.name.split(" ")[0];const fW=Math.max(40,fn.length*6+16);
-            return (<g key={d.id} className="ln" style={{cursor:"pointer"}} onClick={()=>goEdit(d.id)}>
-              <path d={ol} transform={`translate(${dx},${dy}) scale(1.1)`} fill={d.isDeceased?"#D4A843":"#1B3A0E"} filter="url(#sh)"/>
-              <rect x={dx-fW/2} y={dy+12} width={fW} height="14" rx="7" fill={d.isDeceased?"rgba(180,140,60,.85)":"rgba(27,58,14,.9)"}/>
-              <text x={dx+(d.isDeceased?4:0)} y={dy+23} textAnchor="middle" fill="#fff" fontSize="8" fontWeight="600">{fn}</text>
-              {d.isDeceased&&<ellipse cx={dx-fW/2+7} cy={dy+19} rx="4.5" ry="2.5" fill="none" stroke="#F5E6B8" strokeWidth="1.2" opacity=".9"/>}
-            </g>);});})}
-          <g><rect x="620" y="750" width="160" height="55" rx="10" fill="rgba(92,61,30,.85)" stroke="#D4A843" strokeWidth="1.5"/><ellipse cx="700" cy="738" rx="18" ry="6" fill="none" stroke="#D4A843" strokeWidth="2" opacity=".6"/><text x="700" y="768" textAnchor="middle" fill="#F5E6B8" fontSize="11" fontWeight="700" fontFamily="Georgia,serif">Aurthur Coleman</text><text x="700" y="782" textAnchor="middle" fill="#F5E6B8" fontSize="9">&amp;</text><text x="700" y="796" textAnchor="middle" fill="#F5E6B8" fontSize="11" fontWeight="700" fontFamily="Georgia,serif">Orma Ree Coleman</text></g>
-          <text x="700" y="35" textAnchor="middle" fill="#2D5016" fontSize="16" fontWeight="700" fontFamily="Georgia,serif" opacity=".6">The Coleman Family Tree</text>
-        </svg></div></div></div>);}
+        </div>
+        <div style={{marginTop:10,display:"flex",flexWrap:"wrap",gap:4,justifyContent:"center"}}>
+          {rootChildren.map(c=>{const fn=c.name.split(/[\s(]/)[0];const isA=selBranch===c.id;return (
+            <button key={c.id} onClick={()=>clickBranch(c.id)} style={{padding:"3px 8px",borderRadius:12,border:isA?"2px solid #2D5016":"1px solid #D4DFC8",background:isA?"#E8F3DC":"#fff",cursor:"pointer",fontSize:10,fontWeight:isA?700:500,color:c.isDeceased?"#8B7355":"#2D5016",display:"flex",alignItems:"center",gap:2}}>
+              {c.isDeceased&&<HaloSVG size={9}/>}{fn}
+            </button>
+          );})}
+        </div>
+      </div>
+      {selPerson&&(<div style={{width:280,flexShrink:0,background:"#fff",borderRadius:14,border:"1px solid #C8DFB0",padding:20,alignSelf:"flex-start",position:"sticky",top:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+          <div style={{width:50,height:50,borderRadius:"50%",background:selPerson.isDeceased?"#FFF8EC":"#E8F3DC",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,border:"2px solid "+(selPerson.isDeceased?"#D4A843":"#B8D4A0")}}>{selPerson.isDeceased?"\uD83D\uDC7C":"\uD83C\uDF3F"}</div>
+          <button onClick={()=>setSelPerson(null)} style={{background:"none",border:"none",cursor:"pointer",fontSize:18,color:"#9A8B7A"}}>✕</button>
+        </div>
+        <h3 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"10px 0 12px",fontSize:18}}>{selPerson.name}</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:8,fontSize:13}}>
+          {selPerson.age&&<div style={{display:"flex",gap:8}}><span style={{color:"#9A8B7A",minWidth:70}}>Age</span><span style={{color:"#3B2F1E",fontWeight:500}}>{selPerson.age}</span></div>}
+          {selPerson.birthMonth&&<div style={{display:"flex",gap:8}}><span style={{color:"#9A8B7A",minWidth:70}}>Born</span><span style={{color:"#3B2F1E",fontWeight:500}}>{selPerson.birthMonth}</span></div>}
+          {selPerson.spouse&&<div style={{display:"flex",gap:8}}><span style={{color:"#9A8B7A",minWidth:70}}>Spouse</span><span style={{color:"#3B2F1E",fontWeight:500}}>{selPerson.spouse}{selPerson.spouseAge?` (${selPerson.spouseAge})`:""}</span></div>}
+          {(selPerson.city||selPerson.state)&&<div style={{display:"flex",gap:8}}><span style={{color:"#9A8B7A",minWidth:70}}>Location</span><span style={{color:"#3B2F1E",fontWeight:500}}>{selPerson.city}{selPerson.city&&selPerson.state?", ":""}{selPerson.state}</span></div>}
+          {selPerson.phone&&<div style={{display:"flex",gap:8}}><span style={{color:"#9A8B7A",minWidth:70}}>📞</span><span style={{color:"#3B2F1E"}}>{selPerson.phone}</span></div>}
+          {selPerson.email&&<div style={{display:"flex",gap:8}}><span style={{color:"#9A8B7A",minWidth:70}}>✉️</span><span style={{color:"#3B2F1E"}}>{selPerson.email}</span></div>}
+          {(selPerson.childrenUnder18||[]).length>0&&<div><span style={{color:"#9A8B7A",fontSize:12}}>Children</span>{selPerson.childrenUnder18.map((k,ki)=>(<div key={ki} style={{fontSize:12,color:"#6B5A4A",marginTop:2}}>👶 {k.name}{k.age?` (${k.age})`:""}</div>))}</div>}
+        </div>
+        <button onClick={()=>goEdit(selPerson.id)} style={{marginTop:14,padding:"10px 20px",background:"#2D5016",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600,width:"100%"}}>✏️ Edit Profile</button>
+      </div>)}
+    </div>
+  </div>);
+}
 
 /* ═══ LIST VIEW — edit button beside each name ═══ */
 function ListView({members,rootChildren,goEdit}){
@@ -404,13 +468,30 @@ function ListView({members,rootChildren,goEdit}){
 }
 
 /* ═══ FORM PAGE ═══ */
-function FormPage({members,rootChildren,addMember,updateMember,deleteMember,editTargetId,setEditTargetId}){
+function FormPage({members,rootChildren,addMember,updateMember,deleteMember,editTargetId,setEditTargetId,setPage}){
   const bl={name:"",age:"",birthMonth:"",city:"",state:"",spouse:"",spouseAge:"",spouseBirthMonth:"",spouseDeceased:false,phone:"",email:"",phone2:"",email2:"",isDeceased:false,isRootChild:false,parentId:"",childrenUnder18:[]};
   const[mode,setMode]=useState(editTargetId?"edit":"add");const[editId,setEditId]=useState(editTargetId||"");const[form,setForm]=useState(bl);const[added,setAdded]=useState([]);const[saveNote,setSaveNote]=useState("");
   const s=(k,v)=>setForm(p=>({...p,[k]:v}));
   useEffect(()=>{if(editTargetId){setMode("edit");loadM(editTargetId);}},[editTargetId]);
   const loadM=id=>{if(!id){setForm(bl);setEditId("");return;}const m=members.find(x=>x.id===id);if(m){setForm({name:m.name||"",age:m.age||"",birthMonth:m.birthMonth||"",city:m.city||"",state:m.state||"",spouse:m.spouse||"",spouseAge:m.spouseAge||"",spouseBirthMonth:m.spouseBirthMonth||"",spouseDeceased:m.spouseDeceased||false,phone:m.phone||"",email:m.email||"",phone2:m.phone2||"",email2:m.email2||"",isDeceased:m.isDeceased||false,isRootChild:m.isRootChild||false,parentId:m.parentId||"",childrenUnder18:m.childrenUnder18||[]});setEditId(id);}};
-  const sub=()=>{if(mode==="edit"){if(!editId)return alert("Select a member to edit.");updateMember(editId,form);setSaveNote(`Updated ${form.name}`);setTimeout(()=>setSaveNote(""),3000);}else{if(!form.name.trim()||!form.parentId)return alert("Enter a name and select a parent.");addMember(form);setAdded(p=>[...p,form.name]);setForm(bl);}};
+  const sub=()=>{
+    // Required field validation
+    if(!form.name.trim())return alert("Please enter a full name.");
+    if(!form.age)return alert("Please enter an age.");
+    if(!form.birthMonth)return alert("Please select a birth month.");
+    if(!form.city.trim())return alert("Please enter a city.");
+    if(!form.state)return alert("Please select a state.");
+    if(mode==="edit"){
+      if(!editId)return alert("Select a member to edit.");
+      updateMember(editId,form);
+      setSaveNote(`Updated ${form.name}`);
+      setTimeout(()=>{setSaveNote("");setPage("tree");},1500);
+    }else{
+      if(!form.parentId)return alert("Please select a parent.");
+      addMember(form);setAdded(p=>[...p,form.name]);setForm(bl);
+      setTimeout(()=>setPage("tree"),1500);
+    }
+  };
   const sw=m=>{setMode(m);setForm(bl);setEditId("");setSaveNote("");setEditTargetId(null);};
   const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};
   const ls={display:"block",fontSize:11,fontWeight:600,color:"#4A7A28",marginBottom:3};
@@ -499,18 +580,21 @@ function FormPage({members,rootChildren,addMember,updateMember,deleteMember,edit
 /* ═══ MAP ═══ */
 function MapPage({members}){
   const[selState,setSelState]=useState(null);
-  const lv=members.filter(m=>!m.isDeceased&&!m.isRootParent);const sc={};const ppl={};
+  const lv=members.filter(m=>!m.isDeceased&&!m.isRootParent);const sc={};const ppl={};const kidCount={};
   lv.forEach(m=>{if(!m.state)return;sc[m.state]=(sc[m.state]||0)+1;if(!ppl[m.state])ppl[m.state]=[];ppl[m.state].push(m);
-    // Count spouse
     if(m.spouse&&!m.spouseDeceased){sc[m.state]++;ppl[m.state].push({name:m.spouse,age:m.spouseAge||"",isSpouseOf:m.name,phone:"",email:""});}
+    // Count children under 18
+    const kids=(m.childrenUnder18||[]).filter(k=>!k.deceased);
+    if(kids.length>0){kidCount[m.state]=(kidCount[m.state]||0)+kids.length;sc[m.state]+=kids.length;}
   });
   const mx=Math.max(1,...Object.values(sc));const gc=c=>c?`rgba(27,58,14,${.25+(c/mx)*.75})`:"#F0EAE0";
   const sw=Object.entries(sc).sort((a,b)=>b[1]-a[1]);
   const selPeople=selState?ppl[selState]||[]:[];
+  const fmtCount=(st)=>{const adults=sc[st]-(kidCount[st]||0);const kids=kidCount[st]||0;return kids>0?`${adults}(${kids})`:`${sc[st]}`;};
   return (<div><h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Where the Coleman Family Lives</h2>
-    <p style={{color:"#7A6B5A",fontSize:14,margin:"0 0 4px"}}>{Object.values(sc).reduce((a,b)=>a+b,0)} living members & spouses across {sw.length} states</p>
-    <p style={{color:"#9A8B7A",fontSize:12,margin:"0 0 20px",fontStyle:"italic"}}>Click a state or row below to see who lives there.</p>
-    <div style={{overflowX:"auto",marginBottom:24}}><div style={{display:"grid",gridTemplateColumns:"repeat(12,minmax(36px,1fr))",gap:3,minWidth:440}}>{Array.from({length:96}).map((_,idx)=>{const r=Math.floor(idx/12),c=idx%12;const se=Object.entries(STATE_GRID).find(([_,p])=>p[0]===r&&p[1]===c);if(!se)return <div key={idx}/>;const[st]=se;const ct=sc[st]||0;return <div key={idx} title={`${STATE_NAMES[st]}: ${ct}`} onClick={()=>ct>0&&setSelState(selState===st?null:st)} style={{background:selState===st?"#C4963A":gc(ct),borderRadius:4,padding:"6px 2px",textAlign:"center",border:ct>0?"1px solid rgba(27,58,14,.3)":"1px solid #E0D6C8",minHeight:36,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:ct>0?"pointer":"default",transition:"transform .1s",transform:selState===st?"scale(1.1)":"scale(1)"}}><div style={{fontSize:11,fontWeight:700,color:ct>0?"#fff":"#B0A090"}}>{st}</div>{ct>0&&<div style={{fontSize:10,fontWeight:800,color:"#fff"}}>{ct}</div>}</div>;})}</div></div>
+    <p style={{color:"#7A6B5A",fontSize:14,margin:"0 0 4px"}}>{Object.values(sc).reduce((a,b)=>a+b,0)} living family members across {sw.length} states</p>
+    <p style={{color:"#9A8B7A",fontSize:12,margin:"0 0 20px",fontStyle:"italic"}}>Click a state to see who lives there. Numbers in parentheses are children under 18.</p>
+    <div style={{overflowX:"auto",marginBottom:24}}><div style={{display:"grid",gridTemplateColumns:"repeat(12,minmax(36px,1fr))",gap:3,minWidth:440}}>{Array.from({length:96}).map((_,idx)=>{const r=Math.floor(idx/12),c=idx%12;const se=Object.entries(STATE_GRID).find(([_,p])=>p[0]===r&&p[1]===c);if(!se)return <div key={idx}/>;const[st]=se;const ct=sc[st]||0;return <div key={idx} title={`${STATE_NAMES[st]}: ${ct}`} onClick={()=>ct>0&&setSelState(selState===st?null:st)} style={{background:selState===st?"#C4963A":gc(ct),borderRadius:4,padding:"6px 2px",textAlign:"center",border:ct>0?"1px solid rgba(27,58,14,.3)":"1px solid #E0D6C8",minHeight:36,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:ct>0?"pointer":"default",transition:"transform .1s",transform:selState===st?"scale(1.1)":"scale(1)"}}><div style={{fontSize:11,fontWeight:700,color:ct>0?"#fff":"#B0A090"}}>{st}</div>{ct>0&&<div style={{fontSize:10,fontWeight:800,color:"#fff"}}>{fmtCount(st)}</div>}</div>;})}</div></div>
 
     {/* Selected state detail */}
     {selState&&selPeople.length>0&&(<div style={{background:"#fff",borderRadius:12,padding:16,border:"2px solid #C4963A",marginBottom:16}}>
@@ -535,7 +619,7 @@ function MapPage({members}){
       </div>))}
     </div>)}
 
-    {sw.length>0&&<div style={{background:"#fff",borderRadius:12,padding:16,border:"1px solid #C8DFB0"}}><div style={{fontSize:13,fontWeight:700,color:"#2D5016",marginBottom:10}}>Breakdown by State</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:8}}>{sw.map(([st,ct])=><div key={st} onClick={()=>setSelState(selState===st?null:st)} style={{display:"flex",justifyContent:"space-between",padding:"8px 12px",background:selState===st?"#FFF8EC":"#F5FAEF",borderRadius:6,border:selState===st?"2px solid #C4963A":"1px solid #D4DFC8",cursor:"pointer"}}><span style={{fontSize:14,fontWeight:500}}>{STATE_NAMES[st]}</span><span style={{fontSize:14,fontWeight:700,color:"#2D5016"}}>{ct}</span></div>)}</div></div>}
+    {sw.length>0&&<div style={{background:"#fff",borderRadius:12,padding:16,border:"1px solid #C8DFB0"}}><div style={{fontSize:13,fontWeight:700,color:"#2D5016",marginBottom:10}}>Breakdown by State</div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:8}}>{sw.map(([st,ct])=><div key={st} onClick={()=>setSelState(selState===st?null:st)} style={{display:"flex",justifyContent:"space-between",padding:"8px 12px",background:selState===st?"#FFF8EC":"#F5FAEF",borderRadius:6,border:selState===st?"2px solid #C4963A":"1px solid #D4DFC8",cursor:"pointer"}}><span style={{fontSize:14,fontWeight:500}}>{STATE_NAMES[st]}</span><span style={{fontSize:14,fontWeight:700,color:"#2D5016"}}>{fmtCount(st)}</span></div>)}</div></div>}
   </div>);
 }
 
