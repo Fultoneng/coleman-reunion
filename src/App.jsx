@@ -270,10 +270,10 @@ function AppContent(){
         {page==="form"&&<FormPage members={members} rootChildren={rootChildren} addMember={addMember} updateMember={updateMember} deleteMember={deleteMember} editTargetId={editTargetId} setEditTargetId={setEditTargetId} setPage={setPage}/>}
         {page==="map"&&<MapPage members={members}/>}
         {page==="bylaws"&&<ByLawsPage rootChildren={rootChildren}/>}
-        {page==="reunion"&&<ReunionPage/>}
+        {page==="reunion"&&<ReunionPage members={members}/>}
         {page==="costs"&&<CostsPage members={members}/>}
         {page==="attend"&&<AttendancePage members={members} rootChildren={rootChildren} updateMember={updateMember}/>}
-        {page==="results"&&<TrackerPage/>}
+        {page==="results"&&<TrackerPage members={members}/>}
       </div>
     </div>
   );
@@ -348,25 +348,69 @@ function OakTree({members,rootChildren,goEdit}){
     <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
       <div style={{flex:1,minWidth:300,position:"relative"}}>
         <div style={{position:"relative",borderRadius:16,overflow:"hidden",border:"2px solid #B8D4A0",background:"#FAF7F2"}}>
-          <img src="/oak-tree.jpg" alt="Coleman Family Tree" style={{width:"100%",display:"block",pointerEvents:"none"}}/>
+          <img src="/oak-tree.jpg" alt="Coleman Family Tree" style={{width:"95%",display:"block",pointerEvents:"none",margin:"0 auto"}}/>
 
           {rootChildren.map((c,i)=>{
             const pos=bp[i]||[50,50];const descendants=getAllBranch(c.id,members);const fn=c.name.split(/[\s(]/)[0];
             const isActive=selBranch===c.id;const isFaded=selBranch&&!isActive;
             return (<div key={c.id} style={{position:"absolute",left:`${pos[0]}%`,top:`${pos[1]}%`,transform:"translate(-50%,-50%)",zIndex:isActive?10:5,opacity:isFaded?0.3:1,transition:"all .3s ease"}}>
-              {isActive&&descendants.filter(d=>!d.isDeceased).map((d,di)=>{
-                const angle=((di-descendants.length/2)*35)*Math.PI/180;const dist=50+di*12;
-                const lx=Math.cos(angle)*dist;const ly=-Math.abs(Math.sin(angle)*dist)-30;
-                const isF=foundMember&&d.id===foundMember.id;const isS=selPerson?.id===d.id;
-                return (<div key={d.id} onClick={(e)=>{e.stopPropagation();clickPerson(d);}}
-                  style={{position:"absolute",left:lx,top:ly,transform:"translate(-50%,-50%)",
-                    padding:"3px 8px",borderRadius:10,fontSize:10,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",zIndex:6,
-                    background:isF||isS?"#C4963A":d.isDeceased?"rgba(180,140,60,.9)":"rgba(45,80,22,.88)",
-                    color:"#fff",border:isS?"2px solid #fff":"1px solid rgba(255,255,255,.3)",
-                    boxShadow:"0 2px 6px rgba(0,0,0,.25)",transition:"all .2s"}}>
-                  {d.name.split(" ")[0]}
-                </div>);
-              })}
+              {isActive&&(()=>{
+                // Build generational rings from the root child
+                const getDepth=(memberId,depth=0)=>{
+                  const kids=members.filter(m=>m.parentId===memberId&&!m.isRootParent);
+                  let result=kids.map(k=>({...k,gen:depth}));
+                  kids.forEach(k=>{result=result.concat(getDepth(k.id,depth+1));});
+                  return result;
+                };
+                const genMembers=getDepth(c.id);
+                const maxGen=genMembers.length>0?Math.max(...genMembers.map(g=>g.gen)):0;
+                const genColors=["rgba(45,80,22,.92)","rgba(74,140,40,.90)","rgba(106,175,61,.88)","rgba(140,200,90,.85)"];
+                const genLabels=["Children","Grandchildren","Great-Grandchildren","Great-Great"];
+
+                const rings=[];
+                for(let g=0;g<=maxGen;g++){
+                  const ring=genMembers.filter(m=>m.gen===g);
+                  if(ring.length===0)continue;
+                  const radius=55+g*45; // each generation ring is 45px further out
+                  const startAngle=-90;
+                  const spreadAngle=Math.min(28, 320/Math.max(ring.length,1));
+                  rings.push(...ring.map((d,di)=>{
+                    const angleDeg=startAngle+(di-(ring.length-1)/2)*spreadAngle;
+                    const angleRad=angleDeg*Math.PI/180;
+                    const lx=Math.cos(angleRad)*radius;
+                    const ly=Math.sin(angleRad)*radius;
+                    const isF=foundMember&&d.id===foundMember.id;
+                    const isS=selPerson?.id===d.id;
+                    const textRotate=angleDeg>90?angleDeg-180:angleDeg<-90?angleDeg+180:angleDeg;
+                    const fontSize=Math.max(8,11-g);
+                    return (<div key={d.id} onClick={(e)=>{e.stopPropagation();clickPerson(d);}}
+                      style={{position:"absolute",left:lx,top:ly,
+                        transform:`translate(-50%,-50%) rotate(${textRotate}deg)`,
+                        padding:`2px ${10-g}px`,borderRadius:10,fontSize,fontWeight:600,
+                        cursor:"pointer",whiteSpace:"nowrap",zIndex:7-g,
+                        background:isF||isS?"#C4963A":d.isDeceased?"rgba(196,150,58,.92)":genColors[Math.min(g,genColors.length-1)],
+                        color:"#fff",border:isS?"2px solid #fff":"1px solid rgba(255,255,255,.3)",
+                        boxShadow:"0 2px 6px rgba(0,0,0,.25)",transition:"all .3s",
+                        clipPath:"polygon(8% 0%, 92% 0%, 100% 50%, 92% 100%, 8% 100%, 0% 50%)"}}>
+                      {d.name.split(" ")[0]}
+                    </div>);
+                  }));
+                }
+
+                // Generation ring labels
+                const ringLabels=[];
+                for(let g=0;g<=maxGen;g++){
+                  const count=genMembers.filter(m=>m.gen===g).length;
+                  if(count===0)continue;
+                  const r=55+g*45;
+                  ringLabels.push(<div key={`gl${g}`} style={{position:"absolute",left:0,top:-r-16,transform:"translateX(-50%)",
+                    fontSize:8,color:"rgba(45,80,22,.6)",fontWeight:600,whiteSpace:"nowrap",zIndex:2}}>
+                    {genLabels[Math.min(g,genLabels.length-1)]} ({count})
+                  </div>);
+                }
+
+                return [...rings,...ringLabels];
+              })()}
               <div onClick={()=>clickBranch(c.id)} style={pq(c.isDeceased,isActive)}>
                 {c.isDeceased&&<HaloSVG size={11}/>}{fn}
                 {descendants.length>0&&<span style={{background:"rgba(255,255,255,.25)",borderRadius:8,padding:"1px 5px",fontSize:9,marginLeft:2}}>{descendants.length}</span>}
@@ -696,7 +740,7 @@ function ByLawsPage({rootChildren}){
 }
 
 /* ═══ REUNION PLANNER — role assignment + first reunion vote ═══ */
-function ReunionPage(){
+function ReunionPage({members}){
   const[roles,setRoles]=useState({});
   const[allVotes,setAllVotes]=useState([]);
   const[voterName,setVoterName]=useState("");
@@ -749,7 +793,20 @@ function ReunionPage(){
     {id:"child-13",name:"Evan's Family",deceased:false},
   ];
 
-  const supportCount = Object.values(roles).filter(r=>r==="operations"||r==="logistics").length;
+  const hasOps = Object.values(roles).some(r=>r==="operations");
+  const hasLog = Object.values(roles).some(r=>r==="logistics");
+  const hasHost = true; // Shirley's family is locked
+  const allRolesFilled = hasHost && hasOps && hasLog;
+
+  // Track which branches have voted
+  const voterNames = new Set(allVotes.map(v=>(v.name||"").trim().toLowerCase()));
+  const branchVotes = siblings.map(sib=>{
+    const branchMembers = [sib,...getAllBranch(sib.id,members||[])].filter(m=>!m.isDeceased);
+    const branchVoted = branchMembers.some(m=>voterNames.has((m.name||"").trim().toLowerCase()));
+    return {id:sib.id, name:sib.name, voted:branchVoted};
+  });
+  const branchesVoted = branchVotes.filter(b=>b.voted).length;
+  const branchPct = Math.round(branchesVoted/13*100);
 
   return (<div style={{maxWidth:720,margin:"0 auto"}}>
     <h2 style={{fontFamily:"Georgia,serif",color:"#2D5016",margin:"0 0 4px",fontSize:22}}>Reunion Planner</h2>
@@ -801,8 +858,45 @@ function ReunionPage(){
       <p style={{fontSize:13,color:"#7A6B5A",margin:"0 0 6px",lineHeight:1.5}}>Shirley's Family is the Host. We need at least one Operations Support and one Logistics Support family. Refer to the <strong>📜 By-Laws</strong> tab (Sections 6 & 7) for details.</p>
       <p style={{fontSize:12,color:"#8B7355",margin:"0 0 14px"}}>Support families stay with the Host Family unless voted to change at the Business Meeting.</p>
 
-      {supportCount < 2 && <div style={{background:"#FFF8EC",borderRadius:8,padding:10,border:"1px solid #E8DFD0",marginBottom:14,fontSize:13,color:"#C4963A",fontWeight:600}}>⚠️ We still need {2-supportCount} more support {2-supportCount===1?"family":"families"} to make this reunion happen.</div>}
-      {supportCount >= 2 && <div style={{background:"#E8F3DC",borderRadius:8,padding:10,border:"1px solid #B8D4A0",marginBottom:14,fontSize:13,color:"#2D5016",fontWeight:600}}>✓ Support roles are filled! Thank you to the families who stepped up.</div>}
+      {/* ═══ REUNION GO / NO-GO DECISION ═══ */}
+      {(()=>{
+        const ready = allRolesFilled && branchesVoted>=13;
+        const missingRoles = [];
+        if(!hasOps) missingRoles.push("Operations Support");
+        if(!hasLog) missingRoles.push("Logistics Support");
+        return (<div style={{background:ready?"#E8F3DC":branchesVoted>=10&&allRolesFilled?"#FFF8EC":"#F5E6E6",borderRadius:12,padding:16,border:"2px solid "+(ready?"#2D5016":"#C33"),marginBottom:14}}>
+          <div style={{fontSize:15,fontWeight:700,color:ready?"#2D5016":"#933",marginBottom:8}}>
+            {ready?"✓ GO — The reunion can move forward!":"✕ NO-GO — The reunion cannot be confirmed yet"}
+          </div>
+
+          {/* Roles checklist */}
+          <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:12,padding:12,background:"rgba(255,255,255,.5)",borderRadius:8}}>
+            <div style={{fontSize:12,fontWeight:700,color:"#2D5016",marginBottom:2}}>Required Roles</div>
+            <div style={{display:"flex",alignItems:"center",gap:6,fontSize:13}}><span style={{color:"#2D5016"}}>✓</span><span style={{fontWeight:500}}>Host — Shirley's Family (Akron, OH)</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:6,fontSize:13}}><span style={{color:hasOps?"#2D5016":"#C33"}}>{hasOps?"✓":"✕"}</span><span style={{fontWeight:600,color:hasOps?"#2D5016":"#C33"}}>Operations Support — {hasOps?"Filled":"NEEDED"}</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:6,fontSize:13}}><span style={{color:hasLog?"#2D5016":"#C33"}}>{hasLog?"✓":"✕"}</span><span style={{fontWeight:600,color:hasLog?"#2D5016":"#C33"}}>Logistics Support — {hasLog?"Filled":"NEEDED"}</span></div>
+            {missingRoles.length>0&&<p style={{fontSize:11,color:"#933",margin:"4px 0 0"}}>See <strong>📜 By-Laws</strong> (Sections 6 & 7) for role details. Sign up below.</p>}
+          </div>
+
+          {/* Branch voting */}
+          <div style={{padding:12,background:"rgba(255,255,255,.5)",borderRadius:8}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <div style={{fontSize:12,fontWeight:700,color:"#2D5016"}}>Family Branch Votes</div>
+              <div style={{fontSize:16,fontWeight:800,color:branchesVoted>=13?"#2D5016":"#C4963A"}}>{branchesVoted}/13</div>
+            </div>
+            <div style={{background:"#E0D6C8",borderRadius:6,height:10,overflow:"hidden",marginBottom:8}}>
+              <div style={{background:branchesVoted>=13?"#2D5016":"#C4963A",height:"100%",borderRadius:6,width:`${branchPct}%`,transition:"width .5s"}}/>
+            </div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+              {branchVotes.map(b=>(<span key={b.id} style={{padding:"3px 10px",borderRadius:10,fontSize:11,fontWeight:600,background:b.voted?"#E8F3DC":"#F5E6E6",color:b.voted?"#2D5016":"#933",border:"1px solid "+(b.voted?"#B8D4A0":"#E0C8C8")}}>
+                {b.voted?"✓":"✕"} {b.name.replace("'s Family","")}
+              </span>))}
+            </div>
+            <p style={{fontSize:11,color:"#7A6B5A",margin:"8px 0 0"}}>Everyone can vote individually, but we need at least one vote from every branch to move forward. {allVotes.length} total vote{allVotes.length===1?"":"s"} submitted.</p>
+            {branchesVoted<13&&<p style={{fontSize:11,color:"#933",margin:"4px 0 0",fontWeight:600}}>Branches with ✕ — please have at least one adult from your branch vote above.</p>}
+          </div>
+        </div>);
+      })()}
 
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
         {siblings.map(sib=>{
@@ -862,13 +956,25 @@ const RATE_75 = 30;
 const TEEN_DISCOUNT = 0.60; // 13-26 pays 60% of full rate
 
 function CostsPage({members}){
+  const ADMIN_PASS = "Coleman_Admin_2026";
   const [admin,setAdmin]=useState(false);
+  const [adminInput,setAdminInput]=useState("");
+  const [adminAuthed,setAdminAuthed]=useState(false);
+  const [adminError,setAdminError]=useState(false);
   const [budget,setBudget]=useState({eventRoom:800,picnic:1200,activity:600,breakfast:500});
   const [attendees,setAttendees]=useState(75);
   const [saved,setSaved]=useState(false);
   const [rsvps,setRsvps]=useState({});
-  useEffect(()=>{(async()=>{try{const r=await store.get("coleman-budget");if(r?.value){const d=JSON.parse(r.value);setBudget(d.budget||budget);setAttendees(d.attendees||75);}}catch{}try{const r2=await store.get("coleman-rsvp");if(r2?.value)setRsvps(JSON.parse(r2.value));}catch{}})();},[]);
+  const [allVotes,setAllVotes]=useState([]);
+  const [roles,setRoles]=useState({});
+  useEffect(()=>{(async()=>{
+    try{const r=await store.get("coleman-budget");if(r?.value){const d=JSON.parse(r.value);setBudget(d.budget||budget);setAttendees(d.attendees||75);}}catch{}
+    try{const r2=await store.get("coleman-rsvp");if(r2?.value)setRsvps(JSON.parse(r2.value));}catch{}
+    try{const r3=await store.get("coleman-votes-all");if(r3?.value){const v=JSON.parse(r3.value);setAllVotes(Array.isArray(v)?v:[]);}}catch{}
+    try{const r4=await store.get("coleman-roles-v2");if(r4?.value)setRoles(JSON.parse(r4.value));}catch{}
+  })();},[]);
   const saveBudget=async()=>{try{await store.set("coleman-budget",JSON.stringify({budget,attendees}));setSaved(true);setTimeout(()=>setSaved(false),2000);}catch{}};
+  const handleAdminLogin=()=>{if(adminInput===ADMIN_PASS){setAdminAuthed(true);setAdminError(false);setAdmin(true);}else{setAdminError(true);}};
   const feeBudget=budget.picnic+budget.activity+budget.breakfast;
   const is={width:"100%",padding:"10px 12px",border:"1px solid #C8DFB0",borderRadius:8,fontSize:14,background:"#fff",boxSizing:"border-box"};
   const ls={display:"block",fontSize:12,fontWeight:600,color:"#4A7A28",marginBottom:4,marginTop:10};
@@ -964,18 +1070,78 @@ function CostsPage({members}){
     <div style={{display:"flex",justifyContent:"flex-end",marginBottom:12}}>
       <button onClick={()=>setAdmin(!admin)} style={{padding:"6px 14px",background:admin?"#C4963A":"#E8F3DC",color:admin?"#fff":"#2D5016",border:"1px solid "+(admin?"#C4963A":"#B8D4A0"),borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}}>{admin?"Close Admin":"🔧 Host Admin"}</button>
     </div>
-    {admin&&(<div style={{background:"#FFF8EC",borderRadius:14,padding:20,border:"2px solid #E8DFD0",marginBottom:16}}>
-      <div style={{fontSize:15,fontWeight:700,color:"#C4963A",marginBottom:4}}>Host Family — Budget Entry</div>
-      <p style={{fontSize:12,color:"#8B7355",margin:"0 0 12px"}}>Enter estimated costs to calculate per-person rates.</p>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:"0 16px"}}>
-        <div><label style={ls}>🏨 Hotel Event Room</label><input style={is} type="number" value={budget.eventRoom} onChange={e=>setBudget(p=>({...p,eventRoom:+e.target.value||0}))}/></div>
-        <div><label style={ls}>🌳 Saturday Event</label><input style={is} type="number" value={budget.picnic} onChange={e=>setBudget(p=>({...p,picnic:+e.target.value||0}))}/></div>
-        <div><label style={ls}>🎁 Souvenir</label><input style={is} type="number" value={budget.activity} onChange={e=>setBudget(p=>({...p,activity:+e.target.value||0}))}/></div>
-        <div><label style={ls}>🥞 Sunday Breakfast</label><input style={is} type="number" value={budget.breakfast} onChange={e=>setBudget(p=>({...p,breakfast:+e.target.value||0}))}/></div>
-        <div><label style={ls}>👥 Expected Attendees</label><input style={is} type="number" value={attendees} onChange={e=>setAttendees(+e.target.value||1)}/></div>
-      </div>
-      <div style={{display:"flex",gap:8,alignItems:"center",marginTop:14}}><button onClick={saveBudget} style={{padding:"10px 24px",background:"#C4963A",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}}>Save Budget</button>{saved&&<span style={{fontSize:13,color:"#4A7A28",fontWeight:600}}>✓ Saved</span>}</div>
+    {admin&&!adminAuthed&&(<div style={{background:"#FFF8EC",borderRadius:14,padding:20,border:"2px solid #E8DFD0",marginBottom:16,maxWidth:400,margin:"0 auto 16px"}}>
+      <div style={{fontSize:15,fontWeight:700,color:"#C4963A",marginBottom:8}}>Admin Access</div>
+      <p style={{fontSize:12,color:"#8B7355",margin:"0 0 12px"}}>Enter the admin password to access budget controls and voter details.</p>
+      <input type="password" value={adminInput} onChange={e=>{setAdminInput(e.target.value);setAdminError(false);}} onKeyDown={e=>{if(e.key==="Enter")handleAdminLogin();}}
+        placeholder="Admin password" style={{...is,textAlign:"center",marginBottom:8}}/>
+      {adminError&&<div style={{fontSize:12,color:"#C33",marginBottom:8,textAlign:"center"}}>Incorrect password</div>}
+      <button onClick={handleAdminLogin} style={{padding:"10px 24px",background:"#C4963A",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700,width:"100%"}}>Enter</button>
     </div>)}
+    {admin&&adminAuthed&&(<>
+      {/* Budget entry */}
+      <div style={{background:"#FFF8EC",borderRadius:14,padding:20,border:"2px solid #E8DFD0",marginBottom:16}}>
+        <div style={{fontSize:15,fontWeight:700,color:"#C4963A",marginBottom:4}}>Host Family — Budget Entry</div>
+        <p style={{fontSize:12,color:"#8B7355",margin:"0 0 12px"}}>Enter estimated costs to calculate per-person rates.</p>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:"0 16px"}}>
+          <div><label style={ls}>🏨 Hotel Event Room</label><input style={is} type="number" value={budget.eventRoom} onChange={e=>setBudget(p=>({...p,eventRoom:+e.target.value||0}))}/></div>
+          <div><label style={ls}>🌳 Saturday Event</label><input style={is} type="number" value={budget.picnic} onChange={e=>setBudget(p=>({...p,picnic:+e.target.value||0}))}/></div>
+          <div><label style={ls}>🎁 Souvenir</label><input style={is} type="number" value={budget.activity} onChange={e=>setBudget(p=>({...p,activity:+e.target.value||0}))}/></div>
+          <div><label style={ls}>🥞 Sunday Breakfast</label><input style={is} type="number" value={budget.breakfast} onChange={e=>setBudget(p=>({...p,breakfast:+e.target.value||0}))}/></div>
+          <div><label style={ls}>👥 Expected Attendees</label><input style={is} type="number" value={attendees} onChange={e=>setAttendees(+e.target.value||1)}/></div>
+        </div>
+        <div style={{display:"flex",gap:8,alignItems:"center",marginTop:14}}><button onClick={saveBudget} style={{padding:"10px 24px",background:"#C4963A",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}}>Save Budget</button>{saved&&<span style={{fontSize:13,color:"#4A7A28",fontWeight:600}}>✓ Saved</span>}</div>
+      </div>
+
+      {/* Admin voter details */}
+      <div style={{background:"#fff",borderRadius:14,padding:18,border:"2px solid #C4963A",marginBottom:16}}>
+        <div style={{fontSize:15,fontWeight:700,color:"#C4963A",marginBottom:4}}>🔒 Admin Only — Voter Details</div>
+        <p style={{fontSize:12,color:"#8B7355",margin:"0 0 12px"}}>This section is only visible to admins. Use it to track who has and hasn't voted.</p>
+
+        {/* Voting stats */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8,marginBottom:14}}>
+          {(()=>{
+            const adultMembers=members.filter(m=>!m.isDeceased&&!m.isRootParent&&parseInt(m.age)>=18);
+            const voterNames=allVotes.map(v=>(v.name||"").toLowerCase());
+            const votedAdults=adultMembers.filter(m=>voterNames.includes((m.name||"").toLowerCase()));
+            const pct=adultMembers.length>0?Math.round(votedAdults.length/adultMembers.length*100):0;
+            return (<>
+              <div style={{padding:10,background:"#E8F3DC",borderRadius:8,textAlign:"center",border:"1px solid #B8D4A0"}}><div style={{fontSize:22,fontWeight:800,color:"#2D5016"}}>{allVotes.length}</div><div style={{fontSize:10,color:"#4A7A28",fontWeight:600}}>Total Votes</div></div>
+              <div style={{padding:10,background:"#E8F3DC",borderRadius:8,textAlign:"center",border:"1px solid #B8D4A0"}}><div style={{fontSize:22,fontWeight:800,color:"#2D5016"}}>{adultMembers.length}</div><div style={{fontSize:10,color:"#4A7A28",fontWeight:600}}>Adult Members</div></div>
+              <div style={{padding:10,background:pct>=50?"#E8F3DC":"#FFF8EC",borderRadius:8,textAlign:"center",border:"1px solid "+(pct>=50?"#B8D4A0":"#E8DFD0")}}><div style={{fontSize:22,fontWeight:800,color:pct>=50?"#2D5016":"#C4963A"}}>{pct}%</div><div style={{fontSize:10,color:pct>=50?"#4A7A28":"#C4963A",fontWeight:600}}>Participation</div></div>
+            </>);
+          })()}
+        </div>
+
+        {/* Individual votes table */}
+        {allVotes.length>0&&(<div style={{marginBottom:14}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#2D5016",marginBottom:6}}>Who Voted & Their Choices</div>
+          <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+            <thead><tr style={{background:"#F5FAEF"}}><th style={{padding:"8px 10px",textAlign:"left",borderBottom:"2px solid #C8DFB0",color:"#2D5016"}}>Name</th><th style={{padding:"8px 10px",textAlign:"center",borderBottom:"2px solid #C8DFB0",color:"#2D5016"}}>Year</th><th style={{padding:"8px 10px",textAlign:"center",borderBottom:"2px solid #C8DFB0",color:"#2D5016"}}>Weekend</th></tr></thead>
+            <tbody>{allVotes.map((v,i)=>(<tr key={i} style={{background:i%2===0?"#fff":"#FDFCF9"}}><td style={{padding:"6px 10px",borderBottom:"1px solid #F0EAE0",fontWeight:500}}>{v.name}</td><td style={{padding:"6px 10px",textAlign:"center",borderBottom:"1px solid #F0EAE0",fontWeight:600}}>{v.year}</td><td style={{padding:"6px 10px",textAlign:"center",borderBottom:"1px solid #F0EAE0",fontSize:11}}>{v.weekend==="last-july"?"Last wknd July":"First wknd Aug"}</td></tr>))}</tbody>
+          </table></div>
+        </div>)}
+
+        {/* Who hasn't voted — by branch */}
+        <div>
+          <div style={{fontSize:13,fontWeight:700,color:"#C4963A",marginBottom:6}}>Who Hasn't Voted Yet</div>
+          {(()=>{
+            const voterNames=new Set(allVotes.map(v=>(v.name||"").trim().toLowerCase()));
+            const rootKids=members.filter(m=>m.isRootChild);
+            return rootKids.map(rc=>{
+              const branchMembers=[rc,...getAllBranch(rc.id,members)].filter(m=>!m.isDeceased&&parseInt(m.age)>=18);
+              const notVoted=branchMembers.filter(m=>!voterNames.has((m.name||"").trim().toLowerCase()));
+              const voted=branchMembers.length-notVoted.length;
+              if(branchMembers.length===0)return null;
+              return (<div key={rc.id} style={{marginBottom:6,padding:"6px 10px",background:notVoted.length===0?"#E8F3DC":"#FFF8EC",borderRadius:6,border:"1px solid "+(notVoted.length===0?"#B8D4A0":"#E8DFD0")}}>
+                <div style={{fontSize:12,fontWeight:600,color:"#2D5016"}}>{rc.name.split(/[\s(]/)[0]}'s Family <span style={{fontWeight:400,color:"#7A6B5A"}}>({voted}/{branchMembers.length} voted)</span></div>
+                {notVoted.length>0&&<div style={{fontSize:11,color:"#C4963A",marginTop:2}}>{notVoted.map(m=>m.name.split(" ")[0]).join(", ")}</div>}
+              </div>);
+            });
+          })()}
+        </div>
+      </div>
+    </>)}
 
     {/* FEE BUDGET */}
     <div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0",marginBottom:16}}>
@@ -1117,7 +1283,7 @@ const CG=["#1B3A0E","#2D5016","#3A7D1E","#4A8C28","#5DA832","#6AAF3D","#8CD660"]
 function CT({active,payload,label,vl}){if(!active||!payload?.length)return null;return (<div style={{background:"rgba(59,47,30,.92)",borderRadius:8,padding:"8px 12px",color:"#fff",fontSize:12}}><div style={{fontWeight:600,marginBottom:2}}>{label}</div><div>{vl||"Value"}: <span style={{fontWeight:700}}>{typeof payload[0].value==='number'?(Number.isInteger(payload[0].value)?payload[0].value:payload[0].value.toFixed(1)):payload[0].value}</span></div></div>);}
 function CC({title,sub,children}){return (<div style={{background:"#fff",borderRadius:14,padding:18,border:"1px solid #C8DFB0"}}><div style={{fontSize:14,fontWeight:700,color:"#2D5016",marginBottom:2}}>{title}</div>{sub&&<div style={{fontSize:12,color:"#7A6B5A",marginBottom:12}}>{sub}</div>}{children}</div>);}
 
-function TrackerPage(){
+function TrackerPage({members}){
   const[allVotes,setAllVotes]=useState([]);
   const[roles,setRoles]=useState({});
   useEffect(()=>{(async()=>{
@@ -1132,6 +1298,10 @@ function TrackerPage(){
 
   const opsCount=Object.values(roles).filter(r=>r==="operations").length;
   const logCount=Object.values(roles).filter(r=>r==="logistics").length;
+
+  // Adult voter participation
+  const adultMembers=(members||[]).filter(m=>!m.isDeceased&&!m.isRootParent&&parseInt(m.age)>=18);
+  const voterPct=adultMembers.length>0?Math.round(totalVotes/adultMembers.length*100):0;
 
   const siblings=[
     {id:"child-01",name:"Doris's"},{id:"child-02",name:"Samuel's"},{id:"child-03",name:"Luther's"},
@@ -1155,6 +1325,8 @@ function TrackerPage(){
         <div><div style={{fontSize:11,opacity:.7}}>Year</div><div style={{fontSize:20,fontWeight:700}}>{yearVotes["2027"]>yearVotes["2028"]?"2027":yearVotes["2028"]>yearVotes["2027"]?"2028":"Tied"}</div></div>
         <div><div style={{fontSize:11,opacity:.7}}>Weekend</div><div style={{fontSize:20,fontWeight:700}}>{weekendVotes["last-july"]>weekendVotes["first-aug"]?"Last wknd July":weekendVotes["first-aug"]>weekendVotes["last-july"]?"First wknd Aug":"Tied"}</div></div>
         <div><div style={{fontSize:11,opacity:.7}}>Total Votes</div><div style={{fontSize:20,fontWeight:700}}>{totalVotes}</div></div>
+        <div><div style={{fontSize:11,opacity:.7}}>Adult Participation</div><div style={{fontSize:20,fontWeight:700,color:voterPct<50?"#FF8A8A":"#fff"}}>{voterPct}%</div></div>
+        <div><div style={{fontSize:11,opacity:.7}}>Branches Voted</div><div style={{fontSize:20,fontWeight:700}}>{(()=>{const rc=(members||[]).filter(m=>m.isRootChild);const vn=new Set(allVotes.map(v=>(v.name||"").trim().toLowerCase()));return rc.filter(c=>[c,...getAllBranch(c.id,members||[])].filter(m=>!m.isDeceased).some(m=>vn.has((m.name||"").trim().toLowerCase()))).length;})()}/13</div></div>
         <div><div style={{fontSize:11,opacity:.7}}>Ops Support</div><div style={{fontSize:20,fontWeight:700}}>{opsCount}</div></div>
         <div><div style={{fontSize:11,opacity:.7}}>Logistics</div><div style={{fontSize:20,fontWeight:700}}>{logCount}</div></div>
       </div>
