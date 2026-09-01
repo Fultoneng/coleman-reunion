@@ -347,7 +347,7 @@ function OakTree({members,rootChildren,goEdit}){
     </div>
     <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
       <div style={{flex:1,minWidth:300,position:"relative"}}>
-        <div style={{position:"relative",borderRadius:16,overflow:"hidden",border:"2px solid #B8D4A0",background:"#FAF7F2"}}>
+        <div style={{position:"relative",borderRadius:16,border:"2px solid #B8D4A0",background:"#FAF7F2",padding:"80px 60px 20px"}}>
           <img src="/oak-tree.jpg" alt="Coleman Family Tree" style={{width:"95%",display:"block",pointerEvents:"none",margin:"0 auto"}}/>
 
           {rootChildren.map((c,i)=>{
@@ -367,15 +367,20 @@ function OakTree({members,rootChildren,goEdit}){
                 const genColors=["rgba(45,80,22,.92)","rgba(74,140,40,.90)","rgba(106,175,61,.88)","rgba(140,200,90,.85)"];
                 const genLabels=["Children","Grandchildren","Great-Grandchildren","Great-Great"];
 
+                // Calculate outward angle from tree center (50%, 45%)
+                const treeCenterX=50, treeCenterY=45;
+                const outAngle=Math.atan2(pos[1]-treeCenterY, pos[0]-treeCenterX)*180/Math.PI;
+                // The rings should fan outward from center — center of arc points away from trunk
+                const centerAngle=outAngle;
+
                 const rings=[];
                 for(let g=0;g<=maxGen;g++){
                   const ring=genMembers.filter(m=>m.gen===g);
                   if(ring.length===0)continue;
-                  const radius=55+g*45; // each generation ring is 45px further out
-                  const startAngle=-90;
-                  const spreadAngle=Math.min(28, 320/Math.max(ring.length,1));
+                  const radius=55+g*50;
+                  const spreadAngle=Math.min(25, 280/Math.max(ring.length,1));
                   rings.push(...ring.map((d,di)=>{
-                    const angleDeg=startAngle+(di-(ring.length-1)/2)*spreadAngle;
+                    const angleDeg=centerAngle+(di-(ring.length-1)/2)*spreadAngle;
                     const angleRad=angleDeg*Math.PI/180;
                     const lx=Math.cos(angleRad)*radius;
                     const ly=Math.sin(angleRad)*radius;
@@ -397,14 +402,18 @@ function OakTree({members,rootChildren,goEdit}){
                   }));
                 }
 
-                // Generation ring labels
+                // Generation ring labels — positioned along the outward angle
                 const ringLabels=[];
                 for(let g=0;g<=maxGen;g++){
                   const count=genMembers.filter(m=>m.gen===g).length;
                   if(count===0)continue;
-                  const r=55+g*45;
-                  ringLabels.push(<div key={`gl${g}`} style={{position:"absolute",left:0,top:-r-16,transform:"translateX(-50%)",
-                    fontSize:8,color:"rgba(45,80,22,.6)",fontWeight:600,whiteSpace:"nowrap",zIndex:2}}>
+                  const r=55+g*50;
+                  const labelRad=centerAngle*Math.PI/180;
+                  const lx=Math.cos(labelRad)*(r+18);
+                  const ly=Math.sin(labelRad)*(r+18);
+                  ringLabels.push(<div key={`gl${g}`} style={{position:"absolute",left:lx,top:ly,transform:"translate(-50%,-50%)",
+                    fontSize:8,color:"rgba(45,80,22,.6)",fontWeight:600,whiteSpace:"nowrap",zIndex:2,
+                    background:"rgba(250,247,242,.8)",padding:"1px 4px",borderRadius:4}}>
                     {genLabels[Math.min(g,genLabels.length-1)]} ({count})
                   </div>);
                 }
@@ -625,8 +634,13 @@ function FormPage({members,rootChildren,addMember,updateMember,deleteMember,edit
 function MapPage({members}){
   const[selState,setSelState]=useState(null);
   const lv=members.filter(m=>!m.isDeceased&&!m.isRootParent);const sc={};const ppl={};const kidCount={};
-  lv.forEach(m=>{if(!m.state)return;sc[m.state]=(sc[m.state]||0)+1;if(!ppl[m.state])ppl[m.state]=[];ppl[m.state].push(m);
-    if(m.spouse&&!m.spouseDeceased){sc[m.state]++;ppl[m.state].push({name:m.spouse,age:m.spouseAge||"",isSpouseOf:m.name,phone:"",email:""});}
+  lv.forEach(m=>{if(!m.state)return;sc[m.state]=(sc[m.state]||0)+1;if(!ppl[m.state])ppl[m.state]=[];
+    // Find root branch name
+    const rootId=m.parentRootId||m.id;
+    const rootMember=members.find(x=>x.id===rootId);
+    const branchName=rootMember?rootMember.name.split(/[\s(]/)[0]:"";
+    ppl[m.state].push({...m,branchName});
+    if(m.spouse&&!m.spouseDeceased){sc[m.state]++;ppl[m.state].push({name:m.spouse,age:m.spouseAge||"",isSpouseOf:m.name,phone:"",email:"",branchName});}
     // Count children under 18
     const kids=(m.childrenUnder18||[]).filter(k=>!k.deceased);
     if(kids.length>0){kidCount[m.state]=(kidCount[m.state]||0)+kids.length;sc[m.state]+=kids.length;}
@@ -646,20 +660,23 @@ function MapPage({members}){
         <div style={{fontSize:15,fontWeight:700,color:"#2D5016"}}>{STATE_NAMES[selState]} — {selPeople.length} {selPeople.length===1?"person":"people"}</div>
         <button onClick={()=>setSelState(null)} style={{background:"none",border:"none",cursor:"pointer",fontSize:14,color:"#9A8B7A"}}>✕ Close</button>
       </div>
-      {selPeople.map((p,i)=>(<div key={i} style={{padding:"10px 12px",borderBottom:i<selPeople.length-1?"1px solid #F0EAE0":"none",background:i%2===0?"#fff":"#FDFCF9"}}>
-        <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-          <span style={{fontSize:14,fontWeight:600,color:"#2D5016"}}>{p.name}</span>
-          {p.age&&<span style={{fontSize:12,color:"#9A8B7A"}}>(age {p.age})</span>}
-          {p.isSpouseOf&&<span style={{fontSize:11,color:"#8B7355",fontStyle:"italic"}}>spouse of {p.isSpouseOf}</span>}
-          {p.city&&<span style={{fontSize:12,color:"#7A6B5A"}}>{p.city}, {p.state}</span>}
+      {selPeople.map((p,i)=>(<div key={i} style={{padding:"10px 12px",borderBottom:i<selPeople.length-1?"1px solid #F0EAE0":"none",background:i%2===0?"#fff":"#FDFCF9",display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+        <div style={{flex:1}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+            <span style={{fontSize:14,fontWeight:600,color:"#2D5016"}}>{p.name}</span>
+            {p.age&&<span style={{fontSize:12,color:"#9A8B7A"}}>(age {p.age})</span>}
+            {p.isSpouseOf&&<span style={{fontSize:11,color:"#8B7355",fontStyle:"italic"}}>spouse of {p.isSpouseOf}</span>}
+            {p.city&&<span style={{fontSize:12,color:"#7A6B5A"}}>{p.city}, {p.state}</span>}
+          </div>
+          {(p.phone||p.email||p.phone2||p.email2)&&(<div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:4}}>
+            {p.phone&&<span style={{fontSize:12,color:"#4A7A28"}}>📞 {p.phone}</span>}
+            {p.email&&<span style={{fontSize:12,color:"#4A7A28"}}>✉️ {p.email}</span>}
+            {p.phone2&&<span style={{fontSize:12,color:"#4A7A28"}}>📞 {p.phone2}</span>}
+            {p.email2&&<span style={{fontSize:12,color:"#4A7A28"}}>✉️ {p.email2}</span>}
+          </div>)}
+          {!p.phone&&!p.email&&!p.isSpouseOf&&<div style={{fontSize:11,color:"#B0A090",fontStyle:"italic",marginTop:2}}>No contact info — please update on the Members tab</div>}
         </div>
-        {(p.phone||p.email||p.phone2||p.email2)&&(<div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:4}}>
-          {p.phone&&<span style={{fontSize:12,color:"#4A7A28"}}>📞 {p.phone}</span>}
-          {p.email&&<span style={{fontSize:12,color:"#4A7A28"}}>✉️ {p.email}</span>}
-          {p.phone2&&<span style={{fontSize:12,color:"#4A7A28"}}>📞 {p.phone2}</span>}
-          {p.email2&&<span style={{fontSize:12,color:"#4A7A28"}}>✉️ {p.email2}</span>}
-        </div>)}
-        {!p.phone&&!p.email&&!p.isSpouseOf&&<div style={{fontSize:11,color:"#B0A090",fontStyle:"italic",marginTop:2}}>No contact info — please update on the Members tab</div>}
+        {p.branchName&&<div style={{flexShrink:0,padding:"4px 10px",background:"#F5FAEF",borderRadius:8,border:"1px solid #D4DFC8",fontSize:11,fontWeight:600,color:"#4A7A28",whiteSpace:"nowrap"}}>🌿 {p.branchName}'s</div>}
       </div>))}
     </div>)}
 
