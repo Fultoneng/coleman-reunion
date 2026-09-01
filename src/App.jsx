@@ -347,8 +347,10 @@ function OakTree({members,rootChildren,goEdit}){
     </div>
     <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
       <div style={{flex:1,minWidth:300,position:"relative"}}>
-        <div style={{position:"relative",borderRadius:16,border:"2px solid #B8D4A0",background:"#FAF7F2",padding:"80px 60px 20px"}}>
-          <img src="/oak-tree.jpg" alt="Coleman Family Tree" style={{width:"95%",display:"block",pointerEvents:"none",margin:"0 auto"}}/>
+        <div style={{borderRadius:16,border:"2px solid #B8D4A0",background:"#FAF7F2",padding:"80px 60px 20px",overflow:"visible"}}>
+          {/* Inner wrapper — labels position relative to this, which matches the image */}
+          <div style={{position:"relative",width:"95%",margin:"0 auto"}}>
+          <img src="/oak-tree.jpg" alt="Coleman Family Tree" style={{width:"100%",display:"block",pointerEvents:"none"}}/>
 
           {rootChildren.map((c,i)=>{
             const pos=bp[i]||[50,50];const descendants=getAllBranch(c.id,members);const fn=c.name.split(/[\s(]/)[0];
@@ -426,6 +428,7 @@ function OakTree({members,rootChildren,goEdit}){
               </div>
             </div>);
           })}
+          </div>{/* end inner image wrapper */}
         </div>
         <div style={{marginTop:10,display:"flex",flexWrap:"wrap",gap:4,justifyContent:"center"}}>
           {rootChildren.map(c=>{const fn=c.name.split(/[\s(]/)[0];const isA=selBranch===c.id;return (
